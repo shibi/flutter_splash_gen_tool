@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 
 import '../models/canvas_format.dart';
+import '../theme/app_theme.dart';
 import 'editor_screen.dart';
+import 'theme_toggle.dart';
 
 /// Landing page. Each tool gets a button here; more can be added later.
 class StartScreen extends StatelessWidget {
@@ -11,6 +13,11 @@ class StartScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Scaffold(
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        foregroundColor: theme.colorScheme.onSurface,
+        actions: const [ThemeToggleButton(), SizedBox(width: 8)],
+      ),
       body: SafeArea(
         child: Column(
           children: [
@@ -38,7 +45,9 @@ class StartScreen extends StatelessWidget {
                           color: theme.colorScheme.onSurfaceVariant,
                         ),
                       ),
-                      const SizedBox(height: 40),
+                      const SizedBox(height: 20),
+                      const _PaletteStrip(),
+                      const SizedBox(height: 32),
                       _ToolButton(
                         icon: Icons.auto_awesome,
                         label: 'Create Splash Icon',
@@ -101,6 +110,35 @@ class _ToolButton extends StatelessWidget {
                 .push(MaterialPageRoute<void>(builder: builder)),
         icon: Icon(icon),
         label: Text(label),
+      ),
+    );
+  }
+}
+
+/// Thin bar showing the brand palette.
+class _PaletteStrip extends StatelessWidget {
+  const _PaletteStrip();
+
+  static const _colors = [
+    Palette.navy,
+    Palette.plum,
+    Palette.rose,
+    Palette.coral,
+    Palette.peach,
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(3),
+      child: SizedBox(
+        width: 200,
+        height: 6,
+        child: Row(
+          children: [
+            for (final c in _colors) Expanded(child: ColoredBox(color: c)),
+          ],
+        ),
       ),
     );
   }

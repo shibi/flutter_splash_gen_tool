@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../models/editor_state.dart';
+import '../theme/app_theme.dart';
 
 /// Preview of the output canvas, with the safe-circle overlay when the
 /// format has one.
@@ -67,7 +68,21 @@ class PreviewCanvas extends StatelessWidget {
                             ),
                           )
                         else
-                          const Center(child: Text('Open an image to start')),
+                          Center(
+                            child: Text(
+                              'Open an image to start',
+                              // Readable on the canvas colour in either theme.
+                              style: TextStyle(
+                                color:
+                                    state.transparentBackground ||
+                                        state.backgroundColor
+                                                .computeLuminance() >
+                                            0.5
+                                    ? Colors.black54
+                                    : Colors.white70,
+                              ),
+                            ),
+                          ),
                         if (state.showOverlay && circleDiameter != null)
                           Center(
                             child: IgnorePointer(
@@ -77,7 +92,7 @@ class PreviewCanvas extends StatelessWidget {
                                 decoration: BoxDecoration(
                                   shape: BoxShape.circle,
                                   border: Border.all(
-                                    color: Colors.redAccent,
+                                    color: Palette.coral,
                                     width: 2,
                                   ),
                                 ),
@@ -88,7 +103,9 @@ class PreviewCanvas extends StatelessWidget {
                           child: IgnorePointer(
                             child: DecoratedBox(
                               decoration: BoxDecoration(
-                                border: Border.all(color: Colors.black26),
+                                border: Border.all(
+                                  color: Theme.of(context).colorScheme.outline,
+                                ),
                               ),
                             ),
                           ),

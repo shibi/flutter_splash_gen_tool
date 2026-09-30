@@ -6,6 +6,7 @@ import '../models/canvas_format.dart';
 import '../models/editor_state.dart';
 import 'controls_panel.dart';
 import 'preview_canvas.dart';
+import 'theme_toggle.dart';
 
 /// Editor page: preview on the left, controls on the right. Each page gets
 /// its own [EditorState] limited to [formats].
@@ -54,7 +55,10 @@ class _EditorView extends StatelessWidget {
       child: Focus(
         autofocus: true,
         child: Scaffold(
-          appBar: AppBar(title: Text(title)),
+          appBar: AppBar(
+            title: Text(title),
+            actions: const [ThemeToggleButton(), SizedBox(width: 8)],
+          ),
           body: const Row(
             children: [
               Expanded(child: PreviewCanvas()),

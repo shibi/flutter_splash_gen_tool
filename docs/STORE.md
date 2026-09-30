@@ -47,4 +47,4 @@ Then **Submit to the Store**. Certification usually takes a few business days.
 ## Notes
 
 - The package only needs the `runFullTrust` capability, which the tool adds automatically. The app reads and writes files through the Windows open and save dialogs, so it doesn't need broad file-system access.
-- Placeholder identity values build a valid package for local testing, but Partner Center rejects them. Replace them before submitting.
+- The identity values in `pubspec.yaml` must match Partner Center exactly, or the upload is rejected.

@@ -101,9 +101,9 @@ flutter:
 # come from Partner Center > your app > Product identity; see docs/STORE.md.
 msix_config:
   display_name: Splash GenX
-  identity_name: Replace.WithPackageIdentityName
-  publisher: CN=REPLACE-WITH-PUBLISHER-ID
-  publisher_display_name: REPLACE_WITH_PUBLISHER_DISPLAY_NAME
+  identity_name: BZCode.SplashGenx
+  publisher: CN=E8E9AFE1-59F1-4759-A45F-D74F651B7519
+  publisher_display_name: BZCode
   logo_path: assets/icon/app_icon.png
   languages: en-us
   output_name: SplashGenX

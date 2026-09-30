@@ -26,6 +26,7 @@ class EditorState extends ChangeNotifier {
   double _scale = 1.0;
   Offset _offset = Offset.zero;
   Color _backgroundColor = const Color(0xFFFFFFFF);
+  bool _transparentBackground = false;
   bool _showOverlay = true;
   bool _tintEnabled = false;
   Color _tintColor = const Color(0xFF000000);
@@ -37,6 +38,10 @@ class EditorState extends ChangeNotifier {
   double get scale => _scale;
   Offset get offset => _offset;
   Color get backgroundColor => _backgroundColor;
+
+  /// True only when the user chose it and the format allows it.
+  bool get transparentBackground =>
+      _transparentBackground && _format.allowsTransparentBackground;
   bool get showOverlay => _showOverlay;
   bool get tintEnabled => _tintEnabled;
   Color get tintColor => _tintColor;
@@ -120,9 +125,15 @@ class EditorState extends ChangeNotifier {
     offsetX: _offset.dx,
     offsetY: _offset.dy,
     backgroundArgb: _backgroundColor.toARGB32(),
+    transparentBackground: transparentBackground,
     type: type,
     tintArgb: _tintEnabled ? _tintColor.toARGB32() : null,
   );
+
+  void setTransparentBackground(bool transparent) {
+    _transparentBackground = transparent;
+    notifyListeners();
+  }
 
   void setTintEnabled(bool enabled) {
     _tintEnabled = enabled;

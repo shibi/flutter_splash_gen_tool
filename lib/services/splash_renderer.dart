@@ -25,6 +25,7 @@ class RenderRequest {
     required this.offsetY,
     required this.backgroundArgb,
     required this.type,
+    this.transparentBackground = false,
     this.tintArgb,
     this.jpegQuality = 95,
   });
@@ -37,6 +38,10 @@ class RenderRequest {
   final int backgroundArgb;
   final ExportType type;
 
+  /// Leave the background transparent (PNG with alpha) instead of filling
+  /// it with [backgroundArgb].
+  final bool transparentBackground;
+
   /// When set, every pixel of the image takes this colour and keeps its own
   /// transparency, like a monochrome icon tint.
   final int? tintArgb;
@@ -44,24 +49,29 @@ class RenderRequest {
   final int jpegQuality;
 }
 
-/// Builds the output canvas: solid background, the scaled image composited
-/// at its offset from the centre, no alpha channel and no overlay.
+/// Builds the output canvas: the scaled image composited at its offset from
+/// the centre, never the overlay. The background is a solid colour with no
+/// alpha channel, or fully transparent when [RenderRequest.transparentBackground].
 img.Image renderSplash(RenderRequest r) {
   final canvasWidth = r.format.width;
   final canvasHeight = r.format.height;
+  final transparent =
+      r.transparentBackground && r.format.allowsTransparentBackground;
   final canvas = img.Image(
     width: canvasWidth,
     height: canvasHeight,
-    numChannels: 3,
+    numChannels: transparent ? 4 : 3,
   );
-  img.fill(
-    canvas,
-    color: img.ColorRgb8(
-      (r.backgroundArgb >> 16) & 0xFF,
-      (r.backgroundArgb >> 8) & 0xFF,
-      r.backgroundArgb & 0xFF,
-    ),
-  );
+  if (!transparent) {
+    img.fill(
+      canvas,
+      color: img.ColorRgb8(
+        (r.backgroundArgb >> 16) & 0xFF,
+        (r.backgroundArgb >> 8) & 0xFF,
+        r.backgroundArgb & 0xFF,
+      ),
+    );
+  }
 
   final width = (r.source.width * r.scale).round();
   final height = (r.source.height * r.scale).round();
@@ -89,6 +99,9 @@ img.Image renderSplash(RenderRequest r) {
     srcY: y0 - top,
     srcW: x1 - x0,
     srcH: y1 - y0,
+    // On an empty transparent canvas, copying the pixels as they are keeps
+    // the image's own transparency.
+    blend: transparent ? img.BlendMode.direct : img.BlendMode.alpha,
   );
   return canvas;
 }

@@ -27,6 +27,7 @@ enum CanvasFormat {
     label: '840 × 240',
     fileName: 'branding_840x240',
     exportTypes: [ExportType.png],
+    allowsTransparentBackground: true,
   );
 
   const CanvasFormat({
@@ -36,6 +37,7 @@ enum CanvasFormat {
     required this.fileName,
     this.circleDiameter,
     this.exportTypes = ExportType.values,
+    this.allowsTransparentBackground = false,
   });
 
   static const splashFormats = [splashLarge, splashSmall];
@@ -54,4 +56,8 @@ enum CanvasFormat {
   final String fileName;
 
   final List<ExportType> exportTypes;
+
+  /// Whether the user may export with a transparent background instead of
+  /// a solid colour. Splash icons must stay opaque.
+  final bool allowsTransparentBackground;
 }

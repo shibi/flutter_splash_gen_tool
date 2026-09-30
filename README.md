@@ -17,7 +17,7 @@ Download `SplashGenX-Setup-x.y.z.exe` from the repo's Releases page (tagged buil
 
 ### Branding logo
 
-On the start page click **Create Branding Logo**. It works like the splash editor with a fixed 840 × 240 canvas, no circle overlay, **Fit inside** / **Fill background** scaling, background and foreground tint colours, and PNG-only export.
+On the start page click **Create Branding Logo**. It works like the splash editor with a fixed 840 × 240 canvas, no circle overlay, **Fit inside** / **Fill background** scaling, background and foreground tint colours, a **Transparent background** option, and PNG-only export.
 
 ## Release a new installer
 

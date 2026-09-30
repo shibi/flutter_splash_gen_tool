@@ -57,6 +57,7 @@ void main() {
     await tester.tap(find.text('Create Splash Icon'));
     await tester.pumpAndSettle();
     expect(find.text('Open an image to start'), findsOneWidget);
+    expect(find.text('Transparent background'), findsNothing);
     expect(find.text('1152 × 1152'), findsOneWidget);
   });
 
@@ -72,5 +73,12 @@ void main() {
     expect(find.text('Export PNG'), findsOneWidget);
     expect(find.text('Export JPEG'), findsNothing);
     expect(find.text('Show circle overlay'), findsNothing);
+
+    await tester.tap(find.text('Transparent background'));
+    await tester.pump();
+    expect(
+      find.text('The PNG keeps a transparent background.'),
+      findsOneWidget,
+    );
   });
 }

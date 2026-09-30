@@ -18,6 +18,7 @@ RenderRequest _request({
   double dy = 0,
   ExportType type = ExportType.png,
   int? tint,
+  bool transparent = false,
 }) => RenderRequest(
   source: _redSquareWithTransparentCorner(),
   format: format,
@@ -27,6 +28,7 @@ RenderRequest _request({
   backgroundArgb: 0xFF0000FF,
   type: type,
   tintArgb: tint,
+  transparentBackground: transparent,
 );
 
 void main() {
@@ -115,5 +117,25 @@ void main() {
     // 100 px at scale 2 = 200 px centred on (420, 120).
     expect(out.getPixel(420, 120).r, 255);
     expect(out.getPixel(300, 120).r, 0);
+  });
+
+  test('branding can export a transparent PNG', () {
+    final bytes = renderSplashBytes(
+      _request(format: CanvasFormat.branding, transparent: true),
+    );
+    final out = img.decodePng(bytes)!;
+    expect(out.width, 840);
+    expect(out.numChannels, 4);
+    // Outside the image and in its transparent corner: fully transparent.
+    expect(out.getPixel(10, 10).a, 0);
+    expect(out.getPixel(320, 20).a, 0);
+    // Inside the image: opaque red.
+    final inside = out.getPixel(420, 120);
+    expect([inside.r, inside.g, inside.b, inside.a], [255, 0, 0, 255]);
+  });
+
+  test('splash formats ignore the transparent option', () {
+    final bytes = renderSplashBytes(_request(transparent: true));
+    expect(img.decodePng(bytes)!.numChannels, 3);
   });
 }

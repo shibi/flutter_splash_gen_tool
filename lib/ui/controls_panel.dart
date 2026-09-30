@@ -170,13 +170,26 @@ class _ControlsPanelState extends State<ControlsPanel> {
         ),
         const Divider(height: 32),
         Text('Background', style: theme.textTheme.titleSmall),
-        const SizedBox(height: 8),
+        if (state.format.allowsTransparentBackground)
+          SwitchListTile(
+            contentPadding: EdgeInsets.zero,
+            title: const Text('Transparent background'),
+            value: state.transparentBackground,
+            onChanged: state.setTransparentBackground,
+          )
+        else
+          const SizedBox(height: 8),
         _ColorTile(
           color: state.backgroundColor,
+          enabled: !state.transparentBackground,
           onTap: () => _pickBackground(state),
         ),
         Text(
-          'Transparent parts of the image show this colour. The exported file is always opaque.',
+          state.transparentBackground
+              ? 'The PNG keeps a transparent background.'
+              : state.format.allowsTransparentBackground
+              ? 'Transparent parts of the image show this colour.'
+              : 'Transparent parts of the image show this colour. The exported file is always opaque.',
           style: theme.textTheme.bodySmall,
         ),
         const Divider(height: 32),

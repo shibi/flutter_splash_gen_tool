@@ -50,8 +50,18 @@ jobs:
           name: SplashGenX-Setup
           path: installer/Output/*.exe
 
+      - name: Build Microsoft Store package
+        run: dart run msix:create --build-windows false --output-path build\msix
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: SplashGenX-Store-MSIX
+          path: build/msix/*.msix
+
       - name: Publish release
         if: startsWith(github.ref, 'refs/tags/v')
         uses: softprops/action-gh-release@v2
         with:
-          files: installer/Output/*.exe
+          files: |
+            installer/Output/*.exe
+            build/msix/*.msix

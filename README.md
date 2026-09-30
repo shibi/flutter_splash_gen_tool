@@ -19,6 +19,10 @@ Download `SplashGenX-Setup-x.y.z.exe` from the repo's Releases page (tagged buil
 
 On the start page click **Create Branding Logo**. It works like the splash editor with a fixed 840 × 240 canvas, no circle overlay, **Fit inside** / **Fill background** scaling, background and foreground tint colours, a **Transparent background** option, and PNG-only export.
 
+## Microsoft Store
+
+The Store package (`.msix`) is built with the installer. See [docs/STORE.md](docs/STORE.md) for setting the Partner Center identity and submitting.
+
 ## Release a new installer
 
 Bump `version:` in `pubspec.yaml`, then push a tag such as `v1.0.0`. The workflow builds the installer and attaches it to a GitHub release.

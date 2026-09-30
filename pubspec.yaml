@@ -96,3 +96,15 @@ flutter:
   #
   # For details regarding fonts from package dependencies,
   # see https://flutter.dev/to/font-from-package
+
+# Microsoft Store package (dart run msix:create). The three identity values
+# come from Partner Center > your app > Product identity; see docs/STORE.md.
+msix_config:
+  display_name: Splash GenX
+  identity_name: Replace.WithPackageIdentityName
+  publisher: CN=REPLACE-WITH-PUBLISHER-ID
+  publisher_display_name: REPLACE_WITH_PUBLISHER_DISPLAY_NAME
+  logo_path: assets/icon/app_icon.png
+  languages: en-us
+  output_name: SplashGenX
+  store: true

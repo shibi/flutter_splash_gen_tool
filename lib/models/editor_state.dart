@@ -21,6 +21,8 @@ class EditorState extends ChangeNotifier {
   Offset _offset = Offset.zero;
   Color _backgroundColor = const Color(0xFFFFFFFF);
   bool _showOverlay = true;
+  bool _tintEnabled = false;
+  Color _tintColor = const Color(0xFF000000);
 
   SplashFormat get format => _format;
   img.Image? get image => _image;
@@ -30,6 +32,8 @@ class EditorState extends ChangeNotifier {
   Offset get offset => _offset;
   Color get backgroundColor => _backgroundColor;
   bool get showOverlay => _showOverlay;
+  bool get tintEnabled => _tintEnabled;
+  Color get tintColor => _tintColor;
   bool get hasImage => _image != null;
 
   /// Scale at which the whole image, corners included, fits in the circle.
@@ -106,7 +110,20 @@ class EditorState extends ChangeNotifier {
     offsetY: _offset.dy,
     backgroundArgb: _backgroundColor.toARGB32(),
     type: type,
+    tintArgb: _tintEnabled ? _tintColor.toARGB32() : null,
   );
+
+  void setTintEnabled(bool enabled) {
+    _tintEnabled = enabled;
+    notifyListeners();
+  }
+
+  /// Picking a tint colour also turns the tint on.
+  void setTintColor(Color color) {
+    _tintColor = color.withAlpha(0xFF);
+    _tintEnabled = true;
+    notifyListeners();
+  }
 
   void toggleOverlay() {
     _showOverlay = !_showOverlay;

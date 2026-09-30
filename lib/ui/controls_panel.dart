@@ -48,10 +48,10 @@ class _ControlsPanelState extends State<ControlsPanel> {
     if (path != null) _show('Saved $path');
   });
 
-  Future<void> _pickColor(EditorState state) async {
-    final color = await showColorPickerDialog(
+  Future<Color> _pickColor(Color initial, String title) {
+    return showColorPickerDialog(
       context,
-      state.backgroundColor,
+      initial,
       pickersEnabled: const {
         ColorPickerType.primary: true,
         ColorPickerType.accent: false,
@@ -60,10 +60,21 @@ class _ControlsPanelState extends State<ControlsPanel> {
       enableOpacity: false,
       showColorCode: true,
       colorCodeHasColor: true,
-      heading: const Text('Background colour'),
+      heading: Text(title),
       actionButtons: const ColorPickerActionButtons(dialogActionButtons: true),
     );
-    state.setBackgroundColor(color);
+  }
+
+  Future<void> _pickBackground(EditorState state) async {
+    state.setBackgroundColor(
+      await _pickColor(state.backgroundColor, 'Background colour'),
+    );
+  }
+
+  Future<void> _pickTint(EditorState state) async {
+    final color = await _pickColor(state.tintColor, 'Foreground tint');
+    // The dialog returns the starting colour on cancel; keep tint as it was.
+    if (color != state.tintColor) state.setTintColor(color);
   }
 
   @override
@@ -151,22 +162,30 @@ class _ControlsPanelState extends State<ControlsPanel> {
         const Divider(height: 32),
         Text('Background', style: theme.textTheme.titleSmall),
         const SizedBox(height: 8),
-        ListTile(
-          contentPadding: EdgeInsets.zero,
-          leading: Container(
-            width: 32,
-            height: 32,
-            decoration: BoxDecoration(
-              color: state.backgroundColor,
-              border: Border.all(color: Colors.black26),
-              borderRadius: BorderRadius.circular(6),
-            ),
-          ),
-          title: Text(
-            '#${(state.backgroundColor.toARGB32() & 0xFFFFFF).toRadixString(16).padLeft(6, '0').toUpperCase()}',
-          ),
-          trailing: const Icon(Icons.edit_outlined),
-          onTap: () => _pickColor(state),
+        _ColorTile(
+          color: state.backgroundColor,
+          onTap: () => _pickBackground(state),
+        ),
+        Text(
+          'Transparent parts of the image show this colour. The exported file is always opaque.',
+          style: theme.textTheme.bodySmall,
+        ),
+        const Divider(height: 32),
+        Row(
+          children: [
+            Text('Foreground tint', style: theme.textTheme.titleSmall),
+            const Spacer(),
+            Switch(value: state.tintEnabled, onChanged: state.setTintEnabled),
+          ],
+        ),
+        _ColorTile(
+          color: state.tintColor,
+          enabled: state.tintEnabled,
+          onTap: () => _pickTint(state),
+        ),
+        Text(
+          'Recolours the whole image in one colour, keeping its shape and transparency.',
+          style: theme.textTheme.bodySmall,
         ),
         const Divider(height: 32),
         Text('Export', style: theme.textTheme.titleSmall),
@@ -191,6 +210,45 @@ class _ControlsPanelState extends State<ControlsPanel> {
           const LinearProgressIndicator(),
         ],
       ],
+    );
+  }
+}
+
+/// Colour swatch with its hex code; tap to change.
+class _ColorTile extends StatelessWidget {
+  const _ColorTile({
+    required this.color,
+    required this.onTap,
+    this.enabled = true,
+  });
+
+  final Color color;
+  final VoidCallback onTap;
+  final bool enabled;
+
+  @override
+  Widget build(BuildContext context) {
+    final hex = (color.toARGB32() & 0xFFFFFF)
+        .toRadixString(16)
+        .padLeft(6, '0')
+        .toUpperCase();
+    return Opacity(
+      opacity: enabled ? 1 : 0.5,
+      child: ListTile(
+        contentPadding: EdgeInsets.zero,
+        leading: Container(
+          width: 32,
+          height: 32,
+          decoration: BoxDecoration(
+            color: color,
+            border: Border.all(color: Colors.black26),
+            borderRadius: BorderRadius.circular(6),
+          ),
+        ),
+        title: Text('#$hex'),
+        trailing: const Icon(Icons.edit_outlined),
+        onTap: onTap,
+      ),
     );
   }
 }

@@ -1,9 +1,11 @@
 import 'dart:math' as math;
+import 'dart:ui' as ui show Image;
 import 'dart:ui' show Color, Offset;
 
 import 'package:flutter/foundation.dart';
 import 'package:image/image.dart' as img;
 
+import '../services/splash_renderer.dart';
 import 'splash_format.dart';
 
 /// Everything the preview and the exporter need, in output-pixel units.
@@ -13,6 +15,7 @@ import 'splash_format.dart';
 class EditorState extends ChangeNotifier {
   SplashFormat _format = SplashFormat.large;
   img.Image? _image;
+  ui.Image? _preview;
   String? _imagePath;
   double _scale = 1.0;
   Offset _offset = Offset.zero;
@@ -21,6 +24,7 @@ class EditorState extends ChangeNotifier {
 
   SplashFormat get format => _format;
   img.Image? get image => _image;
+  ui.Image? get preview => _preview;
   String? get imagePath => _imagePath;
   double get scale => _scale;
   Offset get offset => _offset;
@@ -49,8 +53,10 @@ class EditorState extends ChangeNotifier {
   double get minScale => fitCircleScale * 0.5;
   double get maxScale => fillBackgroundScale * 1.5;
 
-  void setImage(img.Image image, String path) {
+  void setImage(img.Image image, String path, {ui.Image? preview}) {
+    _preview?.dispose();
     _image = image;
+    _preview = preview;
     _imagePath = path;
     _offset = Offset.zero;
     _scale = fitCircleScale;
@@ -88,6 +94,19 @@ class EditorState extends ChangeNotifier {
     _backgroundColor = color.withAlpha(0xFF);
     notifyListeners();
   }
+
+  /// Moves the image by [delta] output pixels.
+  void nudge(Offset delta) => setOffset(_offset + delta);
+
+  RenderRequest renderRequest(ExportType type) => RenderRequest(
+    source: _image!,
+    format: _format,
+    scale: _scale,
+    offsetX: _offset.dx,
+    offsetY: _offset.dy,
+    backgroundArgb: _backgroundColor.toARGB32(),
+    type: type,
+  );
 
   void toggleOverlay() {
     _showOverlay = !_showOverlay;

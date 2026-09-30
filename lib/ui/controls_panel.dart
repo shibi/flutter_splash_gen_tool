@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../models/editor_state.dart';
-import '../models/splash_format.dart';
+import '../models/canvas_format.dart';
 import '../services/exporter.dart';
 import '../services/image_loader.dart';
 import '../services/splash_renderer.dart';
@@ -101,27 +101,32 @@ class _ControlsPanelState extends State<ControlsPanel> {
           ),
         ],
         const SizedBox(height: 24),
-        Text('Format', style: theme.textTheme.titleSmall),
-        const SizedBox(height: 8),
-        SegmentedButton<SplashFormat>(
-          segments: [
-            for (final f in SplashFormat.values)
-              ButtonSegment(value: f, label: Text(f.label)),
-          ],
-          selected: {state.format},
-          onSelectionChanged: (s) => state.setFormat(s.first),
-        ),
-        const SizedBox(height: 4),
         Text(
-          'Safe circle: ${state.format.circleDiameter} px',
-          style: theme.textTheme.bodySmall,
+          state.formats.length > 1 ? 'Format' : 'Size',
+          style: theme.textTheme.titleSmall,
         ),
-        SwitchListTile(
-          contentPadding: EdgeInsets.zero,
-          title: const Text('Show circle overlay'),
-          value: state.showOverlay,
-          onChanged: (_) => state.toggleOverlay(),
-        ),
+        const SizedBox(height: 8),
+        if (state.formats.length > 1)
+          SegmentedButton<CanvasFormat>(
+            segments: [
+              for (final f in state.formats)
+                ButtonSegment(value: f, label: Text(f.label)),
+            ],
+            selected: {state.format},
+            onSelectionChanged: (s) => state.setFormat(s.first),
+          )
+        else
+          Text('${state.format.label} px, ${_typeNames(state.format)} only'),
+        if (state.format.circleDiameter case final circle?) ...[
+          const SizedBox(height: 4),
+          Text('Safe circle: $circle px', style: theme.textTheme.bodySmall),
+          SwitchListTile(
+            contentPadding: EdgeInsets.zero,
+            title: const Text('Show circle overlay'),
+            value: state.showOverlay,
+            onChanged: (_) => state.toggleOverlay(),
+          ),
+        ],
         const Divider(height: 32),
         Row(
           children: [
@@ -141,8 +146,12 @@ class _ControlsPanelState extends State<ControlsPanel> {
           runSpacing: 8,
           children: [
             OutlinedButton(
-              onPressed: hasImage ? state.fitInCircle : null,
-              child: const Text('Fit in circle'),
+              onPressed: hasImage ? state.fit : null,
+              child: Text(
+                state.format.circleDiameter != null
+                    ? 'Fit in circle'
+                    : 'Fit inside',
+              ),
             ),
             OutlinedButton(
               onPressed: hasImage ? state.fillBackground : null,
@@ -192,7 +201,7 @@ class _ControlsPanelState extends State<ControlsPanel> {
         const SizedBox(height: 8),
         Row(
           children: [
-            for (final type in ExportType.values) ...[
+            for (final type in state.format.exportTypes) ...[
               Expanded(
                 child: FilledButton.tonal(
                   onPressed: hasImage && !_busy
@@ -201,7 +210,8 @@ class _ControlsPanelState extends State<ControlsPanel> {
                   child: Text('Export ${type.label}'),
                 ),
               ),
-              if (type != ExportType.values.last) const SizedBox(width: 8),
+              if (type != state.format.exportTypes.last)
+                const SizedBox(width: 8),
             ],
           ],
         ),
@@ -213,6 +223,9 @@ class _ControlsPanelState extends State<ControlsPanel> {
     );
   }
 }
+
+String _typeNames(CanvasFormat format) =>
+    format.exportTypes.map((t) => t.label).join(' / ');
 
 /// Colour swatch with its hex code; tap to change.
 class _ColorTile extends StatelessWidget {

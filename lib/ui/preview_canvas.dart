@@ -3,7 +3,8 @@ import 'package:provider/provider.dart';
 
 import '../models/editor_state.dart';
 
-/// Square preview of the output canvas with the safe-circle overlay.
+/// Preview of the output canvas, with the safe-circle overlay when the
+/// format has one.
 ///
 /// The overlay is drawn here only; the exporter never sees it. Drag the
 /// image to move it.
@@ -17,13 +18,14 @@ class PreviewCanvas extends StatelessWidget {
       padding: const EdgeInsets.all(24),
       child: Center(
         child: AspectRatio(
-          aspectRatio: 1,
+          aspectRatio: state.format.width / state.format.height,
           child: LayoutBuilder(
             builder: (context, constraints) {
-              final side = constraints.maxWidth;
+              final width = constraints.maxWidth;
+              final height = constraints.maxHeight;
               // Screen pixels per output pixel.
-              final k = side / state.format.canvasSize;
-              final circle = state.format.circleDiameter * k;
+              final k = width / state.format.width;
+              final circleDiameter = state.format.circleDiameter;
               final image = state.preview;
               return GestureDetector(
                 onPanUpdate: state.hasImage
@@ -43,12 +45,12 @@ class PreviewCanvas extends StatelessWidget {
                         if (image != null)
                           Positioned(
                             left:
-                                side / 2 +
+                                width / 2 +
                                 (state.offset.dx -
                                         image.width * state.scale / 2) *
                                     k,
                             top:
-                                side / 2 +
+                                height / 2 +
                                 (state.offset.dy -
                                         image.height * state.scale / 2) *
                                     k,
@@ -64,12 +66,12 @@ class PreviewCanvas extends StatelessWidget {
                           )
                         else
                           const Center(child: Text('Open an image to start')),
-                        if (state.showOverlay)
+                        if (state.showOverlay && circleDiameter != null)
                           Center(
                             child: IgnorePointer(
                               child: Container(
-                                width: circle,
-                                height: circle,
+                                width: circleDiameter * k,
+                                height: circleDiameter * k,
                                 decoration: BoxDecoration(
                                   shape: BoxShape.circle,
                                   border: Border.all(

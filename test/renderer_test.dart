@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:image/image.dart' as img;
-import 'package:splash_genx/models/splash_format.dart';
+import 'package:splash_genx/models/canvas_format.dart';
 import 'package:splash_genx/services/splash_renderer.dart';
 
 img.Image _redSquareWithTransparentCorner() {
@@ -12,7 +12,7 @@ img.Image _redSquareWithTransparentCorner() {
 }
 
 RenderRequest _request({
-  SplashFormat format = SplashFormat.large,
+  CanvasFormat format = CanvasFormat.splashLarge,
   double scale = 2,
   double dx = 0,
   double dy = 0,
@@ -30,12 +30,12 @@ RenderRequest _request({
 );
 
 void main() {
-  for (final format in SplashFormat.values) {
+  for (final format in CanvasFormat.values) {
     test('${format.label} PNG is exact size with no alpha', () {
       final bytes = renderSplashBytes(_request(format: format));
       final decoded = img.decodePng(bytes)!;
-      expect(decoded.width, format.canvasSize);
-      expect(decoded.height, format.canvasSize);
+      expect(decoded.width, format.width);
+      expect(decoded.height, format.height);
       expect(decoded.numChannels, 3);
     });
   }
@@ -93,7 +93,7 @@ void main() {
     final out = renderSplash(
       RenderRequest(
         source: source,
-        format: SplashFormat.small,
+        format: CanvasFormat.splashSmall,
         scale: 10,
         offsetX: 0,
         offsetY: 0,
@@ -106,5 +106,14 @@ void main() {
       expect(p.g, 0);
       expect(p.b, 0);
     }
+  });
+
+  test('branding image is centred on a wide canvas', () {
+    final out = renderSplash(_request(format: CanvasFormat.branding));
+    expect(out.width, 840);
+    expect(out.height, 240);
+    // 100 px at scale 2 = 200 px centred on (420, 120).
+    expect(out.getPixel(420, 120).r, 255);
+    expect(out.getPixel(300, 120).r, 0);
   });
 }

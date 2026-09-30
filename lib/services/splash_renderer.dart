@@ -2,7 +2,7 @@ import 'dart:typed_data';
 
 import 'package:image/image.dart' as img;
 
-import '../models/splash_format.dart';
+import '../models/canvas_format.dart';
 
 enum ExportType {
   png('png', 'PNG'),
@@ -30,7 +30,7 @@ class RenderRequest {
   });
 
   final img.Image source;
-  final SplashFormat format;
+  final CanvasFormat format;
   final double scale;
   final double offsetX;
   final double offsetY;
@@ -47,8 +47,13 @@ class RenderRequest {
 /// Builds the output canvas: solid background, the scaled image composited
 /// at its offset from the centre, no alpha channel and no overlay.
 img.Image renderSplash(RenderRequest r) {
-  final size = r.format.canvasSize;
-  final canvas = img.Image(width: size, height: size, numChannels: 3);
+  final canvasWidth = r.format.width;
+  final canvasHeight = r.format.height;
+  final canvas = img.Image(
+    width: canvasWidth,
+    height: canvasHeight,
+    numChannels: 3,
+  );
   img.fill(
     canvas,
     color: img.ColorRgb8(
@@ -62,12 +67,12 @@ img.Image renderSplash(RenderRequest r) {
   final height = (r.source.height * r.scale).round();
   if (width < 1 || height < 1) return canvas;
 
-  final left = (size / 2 + r.offsetX - width / 2).round();
-  final top = (size / 2 + r.offsetY - height / 2).round();
-  final x0 = left.clamp(0, size);
-  final y0 = top.clamp(0, size);
-  final x1 = (left + width).clamp(0, size);
-  final y1 = (top + height).clamp(0, size);
+  final left = (canvasWidth / 2 + r.offsetX - width / 2).round();
+  final top = (canvasHeight / 2 + r.offsetY - height / 2).round();
+  final x0 = left.clamp(0, canvasWidth);
+  final y0 = top.clamp(0, canvasHeight);
+  final x1 = (left + width).clamp(0, canvasWidth);
+  final y1 = (top + height).clamp(0, canvasHeight);
   if (x1 <= x0 || y1 <= y0) return canvas;
 
   final resized = resizePremultiplied(r.source, width, height);

@@ -15,6 +15,10 @@ Download `SplashGenX-Setup-x.y.z.exe` from the repo's Releases page (tagged buil
    Optionally turn on **Foreground tint** to recolour the whole image in one colour while keeping its shape.
 5. **Export PNG** or **Export JPEG**.
 
+### Branding logo
+
+On the start page click **Create Branding Logo**. It works like the splash editor with a fixed 840 × 240 canvas, no circle overlay, **Fit inside** / **Fill background** scaling, background and foreground tint colours, and PNG-only export.
+
 ## Release a new installer
 
 Bump `version:` in `pubspec.yaml`, then push a tag such as `v1.0.0`. The workflow builds the installer and attaches it to a GitHub release.

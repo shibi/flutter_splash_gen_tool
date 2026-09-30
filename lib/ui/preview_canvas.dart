@@ -3,7 +3,8 @@ import 'package:provider/provider.dart';
 
 import '../models/editor_state.dart';
 
-/// Square preview of the output canvas with the safe-circle overlay.
+/// Preview of the output canvas, with the safe-circle overlay when the
+/// format has one.
 ///
 /// The overlay is drawn here only; the exporter never sees it. Drag the
 /// image to move it.
@@ -17,13 +18,14 @@ class PreviewCanvas extends StatelessWidget {
       padding: const EdgeInsets.all(24),
       child: Center(
         child: AspectRatio(
-          aspectRatio: 1,
+          aspectRatio: state.format.width / state.format.height,
           child: LayoutBuilder(
             builder: (context, constraints) {
-              final side = constraints.maxWidth;
+              final width = constraints.maxWidth;
+              final height = constraints.maxHeight;
               // Screen pixels per output pixel.
-              final k = side / state.format.canvasSize;
-              final circle = state.format.circleDiameter * k;
+              final k = width / state.format.width;
+              final circleDiameter = state.format.circleDiameter;
               final image = state.preview;
               return GestureDetector(
                 onPanUpdate: state.hasImage
@@ -38,17 +40,19 @@ class PreviewCanvas extends StatelessWidget {
                       clipBehavior: Clip.hardEdge,
                       children: [
                         Positioned.fill(
-                          child: ColoredBox(color: state.backgroundColor),
+                          child: state.transparentBackground
+                              ? const _Checkerboard()
+                              : ColoredBox(color: state.backgroundColor),
                         ),
                         if (image != null)
                           Positioned(
                             left:
-                                side / 2 +
+                                width / 2 +
                                 (state.offset.dx -
                                         image.width * state.scale / 2) *
                                     k,
                             top:
-                                side / 2 +
+                                height / 2 +
                                 (state.offset.dy -
                                         image.height * state.scale / 2) *
                                     k,
@@ -57,17 +61,19 @@ class PreviewCanvas extends StatelessWidget {
                             child: RawImage(
                               image: image,
                               fit: BoxFit.fill,
+                              color: state.tintEnabled ? state.tintColor : null,
+                              colorBlendMode: BlendMode.srcIn,
                               filterQuality: FilterQuality.medium,
                             ),
                           )
                         else
                           const Center(child: Text('Open an image to start')),
-                        if (state.showOverlay)
+                        if (state.showOverlay && circleDiameter != null)
                           Center(
                             child: IgnorePointer(
                               child: Container(
-                                width: circle,
-                                height: circle,
+                                width: circleDiameter * k,
+                                height: circleDiameter * k,
                                 decoration: BoxDecoration(
                                   shape: BoxShape.circle,
                                   border: Border.all(
@@ -98,4 +104,36 @@ class PreviewCanvas extends StatelessWidget {
       ),
     );
   }
+}
+
+/// Grey checkerboard that marks a transparent background in the preview.
+class _Checkerboard extends StatelessWidget {
+  const _Checkerboard();
+
+  @override
+  Widget build(BuildContext context) =>
+      const CustomPaint(painter: _CheckerboardPainter());
+}
+
+class _CheckerboardPainter extends CustomPainter {
+  const _CheckerboardPainter();
+
+  static const _cell = 12.0;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    canvas.drawRect(Offset.zero & size, Paint()..color = Colors.white);
+    final dark = Paint()..color = const Color(0xFFD9D9D9);
+    for (var y = 0; y * _cell < size.height; y++) {
+      for (var x = y.isEven ? 0 : 1; x * _cell < size.width; x += 2) {
+        canvas.drawRect(
+          Rect.fromLTWH(x * _cell, y * _cell, _cell, _cell),
+          dark,
+        );
+      }
+    }
+  }
+
+  @override
+  bool shouldRepaint(_CheckerboardPainter oldDelegate) => false;
 }

@@ -25,6 +25,7 @@ ArchitecturesAllowed=x64compatible
 ArchitecturesInstallIn64BitMode=x64compatible
 UninstallDisplayIcon={app}\splash_genx.exe
 WizardStyle=modern
+SetupIconFile=..\windows\runner\resources\app_icon.ico
 
 [Tasks]
 Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"

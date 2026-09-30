@@ -8,10 +8,11 @@ Download `SplashGenX-Setup-x.y.z.exe` from the repo's Releases page (tagged buil
 
 ## Use
 
-1. **Open image** and pick a PNG/JPEG/WebP/BMP.
+1. On the start page click **Create Splash Icon**, then **Open image** and pick a PNG/JPEG/WebP/BMP.
 2. Choose **1152 × 1152** (768 px circle) or **960 × 960** (640 px circle).
 3. Use the **Scale** slider (or **Fit in circle** / **Fill background**) and drag the image or use the arrow keys (Shift = 10 px) to align it with the red circle. The circle is a guide only and is never exported.
-4. Pick a **Background** colour. Output has no alpha channel.
+4. Pick a **Background** colour. Transparent parts of the image (e.g. a PNG logo) show this colour, and the output has no alpha channel.
+   Optionally turn on **Foreground tint** to recolour the whole image in one colour while keeping its shape.
 5. **Export PNG** or **Export JPEG**.
 
 ## Release a new installer

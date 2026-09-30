@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import 'models/editor_state.dart';
-import 'ui/editor_screen.dart';
+import 'ui/start_screen.dart';
 
 void main() {
   runApp(const SplashGenXApp());
@@ -21,7 +21,7 @@ class SplashGenXApp extends StatelessWidget {
         theme: ThemeData(
           colorScheme: ColorScheme.fromSeed(seedColor: Colors.indigo),
         ),
-        home: const EditorScreen(),
+        home: const StartScreen(),
       ),
     );
   }

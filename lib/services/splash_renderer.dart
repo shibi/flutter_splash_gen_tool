@@ -25,6 +25,7 @@ class RenderRequest {
     required this.offsetY,
     required this.backgroundArgb,
     required this.type,
+    this.tintArgb,
     this.jpegQuality = 95,
   });
 
@@ -35,6 +36,11 @@ class RenderRequest {
   final double offsetY;
   final int backgroundArgb;
   final ExportType type;
+
+  /// When set, every pixel of the image takes this colour and keeps its own
+  /// transparency, like a monochrome icon tint.
+  final int? tintArgb;
+
   final int jpegQuality;
 }
 
@@ -64,12 +70,9 @@ img.Image renderSplash(RenderRequest r) {
   final y1 = (top + height).clamp(0, size);
   if (x1 <= x0 || y1 <= y0) return canvas;
 
-  final resized = img.copyResize(
-    r.source.convert(numChannels: 4),
-    width: width,
-    height: height,
-    interpolation: img.Interpolation.cubic,
-  );
+  final resized = resizePremultiplied(r.source, width, height);
+  final tint = r.tintArgb;
+  if (tint != null) applyTint(resized, tint);
   img.compositeImage(
     canvas,
     resized,
@@ -83,6 +86,58 @@ img.Image renderSplash(RenderRequest r) {
     srcH: y1 - y0,
   );
   return canvas;
+}
+
+/// Resizes with colour weighted by alpha, so the colour hidden in fully
+/// transparent pixels (often white) can't bleed into the edges as a halo.
+img.Image resizePremultiplied(img.Image source, int width, int height) {
+  final premultiplied = source.convert(
+    format: img.Format.float32,
+    numChannels: 4,
+  );
+  for (final p in premultiplied) {
+    final a = p.a;
+    p
+      ..r = p.r * a
+      ..g = p.g * a
+      ..b = p.b * a;
+  }
+  final resized = img.copyResize(
+    premultiplied,
+    width: width,
+    height: height,
+    interpolation: img.Interpolation.cubic,
+  );
+  for (final p in resized) {
+    final a = p.a.clamp(0.0, 1.0);
+    p.a = a;
+    if (a == 0) {
+      p
+        ..r = 0
+        ..g = 0
+        ..b = 0;
+      continue;
+    }
+    p
+      ..r = (p.r / a).clamp(0.0, 1.0)
+      ..g = (p.g / a).clamp(0.0, 1.0)
+      ..b = (p.b / a).clamp(0.0, 1.0);
+  }
+  return resized.convert(format: img.Format.uint8);
+}
+
+/// Replaces the colour of every pixel with [argb], keeping each pixel's alpha.
+void applyTint(img.Image image, int argb) {
+  final red = (argb >> 16) & 0xFF;
+  final green = (argb >> 8) & 0xFF;
+  final blue = argb & 0xFF;
+  final max = image.maxChannelValue;
+  for (final p in image) {
+    p
+      ..r = red * max / 255
+      ..g = green * max / 255
+      ..b = blue * max / 255;
+  }
 }
 
 /// Renders and encodes to PNG (RGB) or JPEG.

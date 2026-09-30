@@ -57,6 +57,8 @@ class PreviewCanvas extends StatelessWidget {
                             child: RawImage(
                               image: image,
                               fit: BoxFit.fill,
+                              color: state.tintEnabled ? state.tintColor : null,
+                              colorBlendMode: BlendMode.srcIn,
                               filterQuality: FilterQuality.medium,
                             ),
                           )

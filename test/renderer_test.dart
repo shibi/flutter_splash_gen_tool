@@ -6,7 +6,8 @@ import 'package:splash_genx/services/splash_renderer.dart';
 img.Image _redSquareWithTransparentCorner() {
   final image = img.Image(width: 100, height: 100, numChannels: 4);
   img.fill(image, color: img.ColorRgba8(255, 0, 0, 255));
-  image.setPixelRgba(0, 0, 0, 0, 0, 0);
+  // Transparent pixel that stores white, as many exported PNGs do.
+  image.setPixelRgba(0, 0, 255, 255, 255, 0);
   return image;
 }
 
@@ -16,6 +17,7 @@ RenderRequest _request({
   double dx = 0,
   double dy = 0,
   ExportType type = ExportType.png,
+  int? tint,
 }) => RenderRequest(
   source: _redSquareWithTransparentCorner(),
   format: format,
@@ -24,6 +26,7 @@ RenderRequest _request({
   offsetY: dy,
   backgroundArgb: 0xFF0000FF,
   type: type,
+  tintArgb: tint,
 );
 
 void main() {
@@ -50,8 +53,9 @@ void main() {
     expect(out.getPixel(576, 576).r, 255);
     expect(out.getPixel(470, 576).b, 255);
     expect(out.getPixel(470, 576).r, 0);
-    // Transparent source pixels show the background, not black.
-    expect(out.getPixel(476, 476).b, 255);
+    // Transparent source pixels show the background, not their stored white.
+    final corner = out.getPixel(476, 476);
+    expect([corner.r, corner.g, corner.b], [0, 0, 255]);
   });
 
   test('offset moves the image and clips at the edges', () {
@@ -65,5 +69,42 @@ void main() {
     final out = renderSplash(_request(dx: 5000));
     expect(out.getPixel(576, 576).b, 255);
     expect(out.getPixel(576, 576).r, 0);
+  });
+
+  test('tint recolours the image and keeps transparency', () {
+    final out = renderSplash(_request(tint: 0xFF00FF00));
+    final inside = out.getPixel(576, 576);
+    expect([inside.r, inside.g, inside.b], [0, 255, 0]);
+    final corner = out.getPixel(476, 476);
+    expect([corner.r, corner.g, corner.b], [0, 0, 255]);
+  });
+
+  test('transparent white does not leave a halo when scaled up', () {
+    final source = img.Image(width: 20, height: 20, numChannels: 4);
+    img.fill(source, color: img.ColorRgba8(255, 255, 255, 0));
+    img.fillRect(
+      source,
+      x1: 5,
+      y1: 5,
+      x2: 14,
+      y2: 14,
+      color: img.ColorRgba8(255, 0, 0, 255),
+    );
+    final out = renderSplash(
+      RenderRequest(
+        source: source,
+        format: SplashFormat.small,
+        scale: 10,
+        offsetX: 0,
+        offsetY: 0,
+        backgroundArgb: 0xFF000000,
+        type: ExportType.png,
+      ),
+    );
+    // Red on black: any green or blue would be white bleeding in.
+    for (final p in out) {
+      expect(p.g, 0);
+      expect(p.b, 0);
+    }
   });
 }

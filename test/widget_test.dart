@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:image/image.dart' as img;
 import 'package:splash_genx/main.dart';
@@ -30,8 +31,16 @@ void main() {
     expect(state.scale, closeTo(state.fitCircleScale, 1e-9));
   });
 
-  testWidgets('app starts with empty preview', (tester) async {
+  testWidgets('start page opens the create page', (tester) async {
+    tester.view.physicalSize = const Size(1400, 1000);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+
     await tester.pumpWidget(const SplashGenXApp());
+    expect(find.text('Developer: shibinpr'), findsOneWidget);
+
+    await tester.tap(find.text('Create Splash Icon'));
+    await tester.pumpAndSettle();
     expect(find.text('Open an image to start'), findsOneWidget);
     expect(find.text('1152 × 1152'), findsOneWidget);
   });

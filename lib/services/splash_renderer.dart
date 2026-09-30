@@ -1,0 +1,95 @@
+import 'dart:typed_data';
+
+import 'package:image/image.dart' as img;
+
+import '../models/splash_format.dart';
+
+enum ExportType {
+  png('png', 'PNG'),
+  jpeg('jpg', 'JPEG');
+
+  const ExportType(this.extension, this.label);
+
+  final String extension;
+  final String label;
+}
+
+/// Everything needed to render the final file. Plain values only so it can
+/// be sent to a background isolate.
+class RenderRequest {
+  const RenderRequest({
+    required this.source,
+    required this.format,
+    required this.scale,
+    required this.offsetX,
+    required this.offsetY,
+    required this.backgroundArgb,
+    required this.type,
+    this.jpegQuality = 95,
+  });
+
+  final img.Image source;
+  final SplashFormat format;
+  final double scale;
+  final double offsetX;
+  final double offsetY;
+  final int backgroundArgb;
+  final ExportType type;
+  final int jpegQuality;
+}
+
+/// Builds the output canvas: solid background, the scaled image composited
+/// at its offset from the centre, no alpha channel and no overlay.
+img.Image renderSplash(RenderRequest r) {
+  final size = r.format.canvasSize;
+  final canvas = img.Image(width: size, height: size, numChannels: 3);
+  img.fill(
+    canvas,
+    color: img.ColorRgb8(
+      (r.backgroundArgb >> 16) & 0xFF,
+      (r.backgroundArgb >> 8) & 0xFF,
+      r.backgroundArgb & 0xFF,
+    ),
+  );
+
+  final width = (r.source.width * r.scale).round();
+  final height = (r.source.height * r.scale).round();
+  if (width < 1 || height < 1) return canvas;
+
+  final left = (size / 2 + r.offsetX - width / 2).round();
+  final top = (size / 2 + r.offsetY - height / 2).round();
+  final x0 = left.clamp(0, size);
+  final y0 = top.clamp(0, size);
+  final x1 = (left + width).clamp(0, size);
+  final y1 = (top + height).clamp(0, size);
+  if (x1 <= x0 || y1 <= y0) return canvas;
+
+  final resized = img.copyResize(
+    r.source.convert(numChannels: 4),
+    width: width,
+    height: height,
+    interpolation: img.Interpolation.cubic,
+  );
+  img.compositeImage(
+    canvas,
+    resized,
+    dstX: x0,
+    dstY: y0,
+    dstW: x1 - x0,
+    dstH: y1 - y0,
+    srcX: x0 - left,
+    srcY: y0 - top,
+    srcW: x1 - x0,
+    srcH: y1 - y0,
+  );
+  return canvas;
+}
+
+/// Renders and encodes to PNG (RGB) or JPEG.
+Uint8List renderSplashBytes(RenderRequest r) {
+  final canvas = renderSplash(r);
+  return switch (r.type) {
+    ExportType.png => img.encodePng(canvas),
+    ExportType.jpeg => img.encodeJpg(canvas, quality: r.jpegQuality),
+  };
+}

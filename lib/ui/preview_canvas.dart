@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../models/canvas_format.dart';
 import '../models/editor_state.dart';
 import '../theme/app_theme.dart';
 
-/// Preview of the output canvas, with the safe-circle or margin rectangle
-/// overlay when the format has one.
+/// Preview of the output canvas, with the format's guides: safe circle,
+/// rounded safe square, or margin rectangle.
 ///
 /// The overlay is drawn here only; the exporter never sees it. Drag the
 /// image to move it.
@@ -84,6 +85,25 @@ class PreviewCanvas extends StatelessWidget {
                                             0.5
                                     ? Colors.black54
                                     : Colors.white70,
+                              ),
+                            ),
+                          ),
+                        if (state.showOverlay &&
+                            state.format.squareGuide != null)
+                          Center(
+                            child: IgnorePointer(
+                              child: Container(
+                                width: state.format.squareGuide! * k,
+                                height: state.format.squareGuide! * k,
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(
+                                    CanvasFormat.squareGuideRadius * k,
+                                  ),
+                                  border: Border.all(
+                                    color: Palette.plum,
+                                    width: 2,
+                                  ),
+                                ),
                               ),
                             ),
                           ),

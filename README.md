@@ -19,6 +19,8 @@ Download `SplashGenX-Setup-x.y.z.exe` from the repo's Releases page (tagged buil
 
 On the start page click **Create Branding Logo**. It works like the splash editor with a fixed 800 × 320 canvas. Instead of a circle it shows a rectangle guide inside editable **Left**, **Right**, **Top** and **Bottom** margins (60 px left and right, 50 px top and bottom by default). The guide is never exported. **Fit inside** fits and centres the logo within the margins, **Fill background** covers the canvas, and you get background and foreground tint colours, a **Transparent background** option, and PNG-only export.
 
+On the start page click **Flutter Launcher Icon** for a 1024 × 1024 app icon. The **background layer** is a solid colour, so the PNG is always fully opaque. The **foreground layer** is your image with the same scale, position and tint controls. The preview shows the safe zone, a rounded square covering 66% of the canvas (676 px) with a circle inside it. Neither guide is exported.
+
 ## Microsoft Store
 
 The Store package (`.msix`) is built with the installer. See [docs/STORE.md](docs/STORE.md) for setting the Partner Center identity and submitting.

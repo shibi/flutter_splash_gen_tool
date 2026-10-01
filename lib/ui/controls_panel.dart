@@ -85,9 +85,15 @@ class _ControlsPanelState extends State<ControlsPanel> {
     final hasImage = state.hasImage;
     final name = state.imagePath?.split(RegExp(r'[\\/]')).last;
 
+    final layered = state.format == CanvasFormat.launcherIcon;
+
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
+        if (layered) ...[
+          Text('Foreground layer', style: theme.textTheme.titleSmall),
+          const SizedBox(height: 8),
+        ],
         FilledButton.icon(
           onPressed: _busy ? null : () => _open(state),
           icon: const Icon(Icons.image_outlined),
@@ -120,10 +126,19 @@ class _ControlsPanelState extends State<ControlsPanel> {
           Text('${state.format.label} px, ${_typeNames(state.format)} only'),
         if (state.format.circleDiameter case final circle?) ...[
           const SizedBox(height: 4),
-          Text('Safe circle: $circle px', style: theme.textTheme.bodySmall),
+          Text(
+            state.format.squareGuide != null
+                ? 'Safe zone: ${state.format.squareGuide} px rounded square with a $circle px circle inside'
+                : 'Safe circle: $circle px',
+            style: theme.textTheme.bodySmall,
+          ),
           SwitchListTile(
             contentPadding: EdgeInsets.zero,
-            title: const Text('Show circle overlay'),
+            title: Text(
+              state.format.squareGuide != null
+                  ? 'Show safe zone overlay'
+                  : 'Show circle overlay',
+            ),
             value: state.showOverlay,
             onChanged: (_) => state.toggleOverlay(),
           ),
@@ -238,7 +253,10 @@ class _ControlsPanelState extends State<ControlsPanel> {
           style: theme.textTheme.bodySmall,
         ),
         const Divider(height: 32),
-        Text('Background', style: theme.textTheme.titleSmall),
+        Text(
+          layered ? 'Background layer' : 'Background',
+          style: theme.textTheme.titleSmall,
+        ),
         if (state.format.allowsTransparentBackground)
           SwitchListTile(
             contentPadding: EdgeInsets.zero,

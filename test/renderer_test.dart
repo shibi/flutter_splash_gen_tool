@@ -177,6 +177,23 @@ void main() {
     }
   });
 
+  test('launcher icon is opaque and has no guides drawn', () {
+    final bytes = renderSplashBytes(
+      _request(
+        format: CanvasFormat.launcherIcon,
+        scale: 0.5,
+        transparent: true,
+      ),
+    );
+    final out = img.decodePng(bytes)!;
+    expect([out.width, out.height, out.numChannels], [1024, 1024, 3]);
+    // Background blue where the square and circle guides would be.
+    for (final (x, y) in [(174, 512), (850, 512), (512, 174), (174, 174)]) {
+      final p = out.getPixel(x, y);
+      expect([p.r, p.g, p.b], [0, 0, 255]);
+    }
+  });
+
   test('splash formats ignore the transparent option', () {
     final bytes = renderSplashBytes(_request(transparent: true));
     expect(img.decodePng(bytes)!.numChannels, 3);

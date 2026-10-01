@@ -86,6 +86,23 @@ void main() {
     expect(state.margins, isNull);
   });
 
+  test('launcher icon is a 1024 opaque PNG with a 66% safe zone', () {
+    const f = CanvasFormat.launcherIcon;
+    expect([f.width, f.height], [1024, 1024]);
+    expect(f.squareGuide, 676);
+    expect(f.circleDiameter, 676);
+    expect(f.exportTypes, [ExportType.png]);
+    expect(f.allowsTransparentBackground, isFalse);
+    expect(f.defaultMargins, isNull);
+
+    final state = EditorState(formats: const [f])
+      ..setImage(img.Image(width: 400, height: 300), 'a.png')
+      ..setTransparentBackground(true);
+    expect(state.transparentBackground, isFalse);
+    expect(state.fitScale, closeTo(676 / 500, 1e-9));
+    expect(state.fillBackgroundScale, closeTo(1024 / 300, 1e-9));
+  });
+
   test('switching format keeps relative size', () {
     final state = EditorState()
       ..setImage(img.Image(width: 400, height: 300), 'a.png');
@@ -151,5 +168,21 @@ void main() {
       scrollable: panel,
     );
     expect(find.text('Export JPEG'), findsNothing);
+  });
+
+  testWidgets('start page opens the launcher icon page', (tester) async {
+    tester.view.physicalSize = const Size(1400, 1000);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+
+    await tester.pumpWidget(const SplashGenXApp());
+    await tester.tap(find.text('Flutter Launcher Icon'));
+    await tester.pumpAndSettle();
+    expect(find.text('1024 × 1024 px, PNG only'), findsOneWidget);
+    expect(find.text('Foreground layer'), findsOneWidget);
+    expect(find.text('Background layer'), findsOneWidget);
+    expect(find.text('Show safe zone overlay'), findsOneWidget);
+    expect(find.text('Transparent background'), findsNothing);
+    expect(find.text('Fit in circle'), findsOneWidget);
   });
 }

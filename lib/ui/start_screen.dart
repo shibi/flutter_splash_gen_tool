@@ -40,7 +40,7 @@ class StartScreen extends StatelessWidget {
                       ),
                       const SizedBox(height: 8),
                       Text(
-                        'Tools for Flutter splash screens',
+                        'Tools for Flutter splash screens and app icons',
                         style: theme.textTheme.bodyLarge?.copyWith(
                           color: theme.colorScheme.onSurfaceVariant,
                         ),
@@ -63,6 +63,15 @@ class StartScreen extends StatelessWidget {
                         builder: (_) => const EditorScreen(
                           title: 'Create Branding Logo',
                           formats: [CanvasFormat.branding],
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      _ToolButton(
+                        icon: Icons.apps_rounded,
+                        label: 'Flutter Launcher Icon',
+                        builder: (_) => const EditorScreen(
+                          title: 'Flutter Launcher Icon',
+                          formats: [CanvasFormat.launcherIcon],
                         ),
                       ),
                     ],

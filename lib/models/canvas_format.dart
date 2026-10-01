@@ -29,6 +29,19 @@ enum CanvasFormat {
     exportTypes: [ExportType.png],
     allowsTransparentBackground: true,
     defaultMargins: Margins(left: 60, top: 50, right: 60, bottom: 50),
+  ),
+
+  /// Flutter launcher (app) icon: a solid background layer with the image
+  /// as the foreground layer, exported as one opaque PNG.
+  launcherIcon(
+    width: 1024,
+    height: 1024,
+    // 66% of the canvas: the safe zone that survives every icon mask.
+    circleDiameter: 676,
+    squareGuide: 676,
+    label: '1024 × 1024',
+    fileName: 'launcher_icon_1024',
+    exportTypes: [ExportType.png],
   );
 
   const CanvasFormat({
@@ -40,6 +53,7 @@ enum CanvasFormat {
     this.exportTypes = ExportType.values,
     this.allowsTransparentBackground = false,
     this.defaultMargins,
+    this.squareGuide,
   });
 
   static const splashFormats = [splashLarge, splashSmall];
@@ -66,6 +80,13 @@ enum CanvasFormat {
   /// Starting margins of the rectangle guide the logo should stay inside,
   /// or null when the format has no rectangle guide.
   final Margins? defaultMargins;
+
+  /// Side of the centred rounded-square guide, or null for none. The circle
+  /// guide, when there is one, sits inside it.
+  final int? squareGuide;
+
+  /// Corner radius of [squareGuide], in output pixels.
+  static const squareGuideRadius = 4.0;
 }
 
 /// Distances in output pixels from each canvas edge to the safe rectangle.

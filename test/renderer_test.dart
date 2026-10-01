@@ -112,11 +112,11 @@ void main() {
 
   test('branding image is centred on a wide canvas', () {
     final out = renderSplash(_request(format: CanvasFormat.branding));
-    expect(out.width, 840);
-    expect(out.height, 240);
-    // 100 px at scale 2 = 200 px centred on (420, 120).
-    expect(out.getPixel(420, 120).r, 255);
-    expect(out.getPixel(300, 120).r, 0);
+    expect(out.width, 800);
+    expect(out.height, 320);
+    // 100 px at scale 2 = 200 px centred on (400, 160).
+    expect(out.getPixel(400, 160).r, 255);
+    expect(out.getPixel(280, 160).r, 0);
   });
 
   test('branding can export a transparent PNG', () {
@@ -124,14 +124,57 @@ void main() {
       _request(format: CanvasFormat.branding, transparent: true),
     );
     final out = img.decodePng(bytes)!;
-    expect(out.width, 840);
+    expect(out.width, 800);
     expect(out.numChannels, 4);
-    // Outside the image and in its transparent corner: fully transparent.
+    // Outside the image: fully transparent.
     expect(out.getPixel(10, 10).a, 0);
-    expect(out.getPixel(320, 20).a, 0);
+    // In the image's transparent corner: mostly see-through.
+    expect(out.getPixel(300, 60).a, lessThan(128));
     // Inside the image: opaque red.
-    final inside = out.getPixel(420, 120);
+    final inside = out.getPixel(400, 160);
     expect([inside.r, inside.g, inside.b, inside.a], [255, 0, 0, 255]);
+  });
+
+  test('margin rectangle is never drawn into the output', () {
+    final out = renderSplash(
+      _request(format: CanvasFormat.branding, scale: 0.5),
+    );
+    // Background blue all along the margin edges.
+    for (final (x, y) in [(60, 160), (740, 160), (400, 50), (400, 270)]) {
+      final p = out.getPixel(x, y);
+      expect([p.r, p.g, p.b], [0, 0, 255]);
+    }
+  });
+
+  test('upscaling is smooth, with no blocky steps', () {
+    // Black left half, white right half, 4 px wide, enlarged 16 times.
+    final source = img.Image(width: 4, height: 1, numChannels: 4);
+    for (var x = 0; x < 4; x++) {
+      final v = x < 2 ? 0 : 255;
+      source.setPixelRgba(x, 0, v, v, v, 255);
+    }
+    final out = resizePremultiplied(source, 64, 1);
+    final row = [for (var x = 0; x < 64; x++) out.getPixel(x, 0).r.toInt()];
+    // Brightness rises steadily across the edge instead of jumping.
+    final edge = row.sublist(20, 44);
+    for (var i = 1; i < edge.length; i++) {
+      expect(edge[i], greaterThanOrEqualTo(edge[i - 1]));
+      expect(edge[i] - edge[i - 1], lessThan(64));
+    }
+    expect(row.first, lessThan(10));
+    expect(row.last, greaterThan(245));
+  });
+
+  test('shrinking keeps a thin line continuous', () {
+    // A 1 px diagonal line shrunk 10 times must not break into dots.
+    final source = img.Image(width: 1000, height: 1000, numChannels: 4);
+    for (var i = 0; i < 1000; i++) {
+      source.setPixelRgba(i, i, 255, 255, 255, 255);
+    }
+    final out = resizePremultiplied(source, 100, 100);
+    for (var i = 2; i < 98; i++) {
+      expect(out.getPixel(i, i).a, greaterThan(0), reason: 'pixel $i');
+    }
   });
 
   test('splash formats ignore the transparent option', () {

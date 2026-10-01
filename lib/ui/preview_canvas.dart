@@ -4,8 +4,8 @@ import 'package:provider/provider.dart';
 import '../models/editor_state.dart';
 import '../theme/app_theme.dart';
 
-/// Preview of the output canvas, with the safe-circle overlay when the
-/// format has one.
+/// Preview of the output canvas, with the safe-circle or margin rectangle
+/// overlay when the format has one.
 ///
 /// The overlay is drawn here only; the exporter never sees it. Drag the
 /// image to move it.
@@ -28,7 +28,11 @@ class PreviewCanvas extends StatelessWidget {
               final k = width / state.format.width;
               final circleDiameter = state.format.circleDiameter;
               final image = state.preview;
+              final margins = state.margins;
               return GestureDetector(
+                // Take focus back from a text field so arrow keys move the
+                // image again.
+                onPanDown: (_) => Focus.maybeOf(context)?.requestFocus(),
                 onPanUpdate: state.hasImage
                     ? (d) => state.nudge(d.delta / k)
                     : null,
@@ -64,7 +68,7 @@ class PreviewCanvas extends StatelessWidget {
                               fit: BoxFit.fill,
                               color: state.tintEnabled ? state.tintColor : null,
                               colorBlendMode: BlendMode.srcIn,
-                              filterQuality: FilterQuality.medium,
+                              filterQuality: FilterQuality.high,
                             ),
                           )
                         else
@@ -91,6 +95,24 @@ class PreviewCanvas extends StatelessWidget {
                                 height: circleDiameter * k,
                                 decoration: BoxDecoration(
                                   shape: BoxShape.circle,
+                                  border: Border.all(
+                                    color: Palette.coral,
+                                    width: 2,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        if (state.showOverlay && margins != null)
+                          // Depends only on the margins, never on the image.
+                          Positioned(
+                            left: margins.left * k,
+                            top: margins.top * k,
+                            right: margins.right * k,
+                            bottom: margins.bottom * k,
+                            child: IgnorePointer(
+                              child: DecoratedBox(
+                                decoration: BoxDecoration(
                                   border: Border.all(
                                     color: Palette.coral,
                                     width: 2,

@@ -1,5 +1,6 @@
 import 'package:flex_color_picker/flex_color_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
 import '../models/editor_state.dart';
@@ -127,6 +128,74 @@ class _ControlsPanelState extends State<ControlsPanel> {
             onChanged: (_) => state.toggleOverlay(),
           ),
         ],
+        if (state.margins case final margins?) ...[
+          const SizedBox(height: 16),
+          Row(
+            children: [
+              Text('Margins (px)', style: theme.textTheme.titleSmall),
+              const Spacer(),
+              TextButton(
+                onPressed: margins == state.format.defaultMargins
+                    ? null
+                    : state.resetMargins,
+                child: const Text('Reset'),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              Expanded(
+                child: _MarginField(
+                  label: 'Left',
+                  value: margins.left,
+                  onChanged: (v) => state.setMargins(margins.copyWith(left: v)),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: _MarginField(
+                  label: 'Right',
+                  value: margins.right,
+                  onChanged: (v) =>
+                      state.setMargins(margins.copyWith(right: v)),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              Expanded(
+                child: _MarginField(
+                  label: 'Top',
+                  value: margins.top,
+                  onChanged: (v) => state.setMargins(margins.copyWith(top: v)),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: _MarginField(
+                  label: 'Bottom',
+                  value: margins.bottom,
+                  onChanged: (v) =>
+                      state.setMargins(margins.copyWith(bottom: v)),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 4),
+          Text(
+            'Safe area: ${state.safeArea.width.round()} × ${state.safeArea.height.round()} px',
+            style: theme.textTheme.bodySmall,
+          ),
+          SwitchListTile(
+            contentPadding: EdgeInsets.zero,
+            title: const Text('Show margin overlay'),
+            value: state.showOverlay,
+            onChanged: (_) => state.toggleOverlay(),
+          ),
+        ],
         const Divider(height: 32),
         Row(
           children: [
@@ -233,6 +302,80 @@ class _ControlsPanelState extends State<ControlsPanel> {
           const LinearProgressIndicator(),
         ],
       ],
+    );
+  }
+}
+
+/// Whole-pixel margin input. Shows the stored value again when the edit is
+/// cleared or limited, so the field always matches the overlay.
+class _MarginField extends StatefulWidget {
+  const _MarginField({
+    required this.label,
+    required this.value,
+    required this.onChanged,
+  });
+
+  final String label;
+  final int value;
+  final ValueChanged<int> onChanged;
+
+  @override
+  State<_MarginField> createState() => _MarginFieldState();
+}
+
+class _MarginFieldState extends State<_MarginField> {
+  late final _controller = TextEditingController(text: '${widget.value}');
+  final _focus = FocusNode();
+
+  @override
+  void initState() {
+    super.initState();
+    _focus.addListener(() {
+      if (!_focus.hasFocus) _sync();
+    });
+  }
+
+  @override
+  void didUpdateWidget(_MarginField oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // While typing, only catch up when the value changed for another reason
+    // (Reset, or a limit), so a half-typed or empty field isn't overwritten.
+    if (!_focus.hasFocus ||
+        (widget.value != oldWidget.value &&
+            int.tryParse(_controller.text) != widget.value)) {
+      _sync();
+    }
+  }
+
+  void _sync() {
+    final text = '${widget.value}';
+    if (_controller.text != text) _controller.text = text;
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    _focus.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return TextField(
+      controller: _controller,
+      focusNode: _focus,
+      keyboardType: TextInputType.number,
+      inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+      decoration: InputDecoration(
+        labelText: widget.label,
+        isDense: true,
+        border: const OutlineInputBorder(),
+      ),
+      onChanged: (text) {
+        final v = int.tryParse(text);
+        if (v != null) widget.onChanged(v);
+      },
+      onSubmitted: (_) => _sync(),
     );
   }
 }

@@ -22,12 +22,13 @@ enum CanvasFormat {
 
   /// Splash branding image shown at the bottom of the splash screen.
   branding(
-    width: 840,
-    height: 240,
-    label: '840 × 240',
-    fileName: 'branding_840x240',
+    width: 800,
+    height: 320,
+    label: '800 × 320',
+    fileName: 'branding_800x320',
     exportTypes: [ExportType.png],
     allowsTransparentBackground: true,
+    defaultMargins: Margins(left: 60, top: 50, right: 60, bottom: 50),
   );
 
   const CanvasFormat({
@@ -38,6 +39,7 @@ enum CanvasFormat {
     this.circleDiameter,
     this.exportTypes = ExportType.values,
     this.allowsTransparentBackground = false,
+    this.defaultMargins,
   });
 
   static const splashFormats = [splashLarge, splashSmall];
@@ -60,4 +62,41 @@ enum CanvasFormat {
   /// Whether the user may export with a transparent background instead of
   /// a solid colour. Splash icons must stay opaque.
   final bool allowsTransparentBackground;
+
+  /// Starting margins of the rectangle guide the logo should stay inside,
+  /// or null when the format has no rectangle guide.
+  final Margins? defaultMargins;
+}
+
+/// Distances in output pixels from each canvas edge to the safe rectangle.
+class Margins {
+  const Margins({
+    required this.left,
+    required this.top,
+    required this.right,
+    required this.bottom,
+  });
+
+  final int left;
+  final int top;
+  final int right;
+  final int bottom;
+
+  Margins copyWith({int? left, int? top, int? right, int? bottom}) => Margins(
+    left: left ?? this.left,
+    top: top ?? this.top,
+    right: right ?? this.right,
+    bottom: bottom ?? this.bottom,
+  );
+
+  @override
+  bool operator ==(Object other) =>
+      other is Margins &&
+      other.left == left &&
+      other.top == top &&
+      other.right == right &&
+      other.bottom == bottom;
+
+  @override
+  int get hashCode => Object.hash(left, top, right, bottom);
 }

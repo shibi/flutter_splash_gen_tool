@@ -1,9 +1,10 @@
 import 'package:flex_color_picker/flex_color_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
 import '../models/editor_state.dart';
-import '../models/splash_format.dart';
+import '../models/canvas_format.dart';
 import '../services/exporter.dart';
 import '../services/image_loader.dart';
 import '../services/splash_renderer.dart';
@@ -48,10 +49,10 @@ class _ControlsPanelState extends State<ControlsPanel> {
     if (path != null) _show('Saved $path');
   });
 
-  Future<void> _pickColor(EditorState state) async {
-    final color = await showColorPickerDialog(
+  Future<Color> _pickColor(Color initial, String title) {
+    return showColorPickerDialog(
       context,
-      state.backgroundColor,
+      initial,
       pickersEnabled: const {
         ColorPickerType.primary: true,
         ColorPickerType.accent: false,
@@ -60,10 +61,21 @@ class _ControlsPanelState extends State<ControlsPanel> {
       enableOpacity: false,
       showColorCode: true,
       colorCodeHasColor: true,
-      heading: const Text('Background colour'),
+      heading: Text(title),
       actionButtons: const ColorPickerActionButtons(dialogActionButtons: true),
     );
-    state.setBackgroundColor(color);
+  }
+
+  Future<void> _pickBackground(EditorState state) async {
+    state.setBackgroundColor(
+      await _pickColor(state.backgroundColor, 'Background colour'),
+    );
+  }
+
+  Future<void> _pickTint(EditorState state) async {
+    final color = await _pickColor(state.tintColor, 'Foreground tint');
+    // The dialog returns the starting colour on cancel; keep tint as it was.
+    if (color != state.tintColor) state.setTintColor(color);
   }
 
   @override
@@ -90,27 +102,100 @@ class _ControlsPanelState extends State<ControlsPanel> {
           ),
         ],
         const SizedBox(height: 24),
-        Text('Format', style: theme.textTheme.titleSmall),
-        const SizedBox(height: 8),
-        SegmentedButton<SplashFormat>(
-          segments: [
-            for (final f in SplashFormat.values)
-              ButtonSegment(value: f, label: Text(f.label)),
-          ],
-          selected: {state.format},
-          onSelectionChanged: (s) => state.setFormat(s.first),
-        ),
-        const SizedBox(height: 4),
         Text(
-          'Safe circle: ${state.format.circleDiameter} px',
-          style: theme.textTheme.bodySmall,
+          state.formats.length > 1 ? 'Format' : 'Size',
+          style: theme.textTheme.titleSmall,
         ),
-        SwitchListTile(
-          contentPadding: EdgeInsets.zero,
-          title: const Text('Show circle overlay'),
-          value: state.showOverlay,
-          onChanged: (_) => state.toggleOverlay(),
-        ),
+        const SizedBox(height: 8),
+        if (state.formats.length > 1)
+          SegmentedButton<CanvasFormat>(
+            segments: [
+              for (final f in state.formats)
+                ButtonSegment(value: f, label: Text(f.label)),
+            ],
+            selected: {state.format},
+            onSelectionChanged: (s) => state.setFormat(s.first),
+          )
+        else
+          Text('${state.format.label} px, ${_typeNames(state.format)} only'),
+        if (state.format.circleDiameter case final circle?) ...[
+          const SizedBox(height: 4),
+          Text('Safe circle: $circle px', style: theme.textTheme.bodySmall),
+          SwitchListTile(
+            contentPadding: EdgeInsets.zero,
+            title: const Text('Show circle overlay'),
+            value: state.showOverlay,
+            onChanged: (_) => state.toggleOverlay(),
+          ),
+        ],
+        if (state.margins case final margins?) ...[
+          const SizedBox(height: 16),
+          Row(
+            children: [
+              Text('Margins (px)', style: theme.textTheme.titleSmall),
+              const Spacer(),
+              TextButton(
+                onPressed: margins == state.format.defaultMargins
+                    ? null
+                    : state.resetMargins,
+                child: const Text('Reset'),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              Expanded(
+                child: _MarginField(
+                  label: 'Left',
+                  value: margins.left,
+                  onChanged: (v) => state.setMargins(margins.copyWith(left: v)),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: _MarginField(
+                  label: 'Right',
+                  value: margins.right,
+                  onChanged: (v) =>
+                      state.setMargins(margins.copyWith(right: v)),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              Expanded(
+                child: _MarginField(
+                  label: 'Top',
+                  value: margins.top,
+                  onChanged: (v) => state.setMargins(margins.copyWith(top: v)),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: _MarginField(
+                  label: 'Bottom',
+                  value: margins.bottom,
+                  onChanged: (v) =>
+                      state.setMargins(margins.copyWith(bottom: v)),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 4),
+          Text(
+            'Safe area: ${state.safeArea.width.round()} × ${state.safeArea.height.round()} px',
+            style: theme.textTheme.bodySmall,
+          ),
+          SwitchListTile(
+            contentPadding: EdgeInsets.zero,
+            title: const Text('Show margin overlay'),
+            value: state.showOverlay,
+            onChanged: (_) => state.toggleOverlay(),
+          ),
+        ],
         const Divider(height: 32),
         Row(
           children: [
@@ -130,8 +215,12 @@ class _ControlsPanelState extends State<ControlsPanel> {
           runSpacing: 8,
           children: [
             OutlinedButton(
-              onPressed: hasImage ? state.fitInCircle : null,
-              child: const Text('Fit in circle'),
+              onPressed: hasImage ? state.fit : null,
+              child: Text(
+                state.format.circleDiameter != null
+                    ? 'Fit in circle'
+                    : 'Fit inside',
+              ),
             ),
             OutlinedButton(
               onPressed: hasImage ? state.fillBackground : null,
@@ -150,30 +239,51 @@ class _ControlsPanelState extends State<ControlsPanel> {
         ),
         const Divider(height: 32),
         Text('Background', style: theme.textTheme.titleSmall),
-        const SizedBox(height: 8),
-        ListTile(
-          contentPadding: EdgeInsets.zero,
-          leading: Container(
-            width: 32,
-            height: 32,
-            decoration: BoxDecoration(
-              color: state.backgroundColor,
-              border: Border.all(color: Colors.black26),
-              borderRadius: BorderRadius.circular(6),
-            ),
-          ),
-          title: Text(
-            '#${(state.backgroundColor.toARGB32() & 0xFFFFFF).toRadixString(16).padLeft(6, '0').toUpperCase()}',
-          ),
-          trailing: const Icon(Icons.edit_outlined),
-          onTap: () => _pickColor(state),
+        if (state.format.allowsTransparentBackground)
+          SwitchListTile(
+            contentPadding: EdgeInsets.zero,
+            title: const Text('Transparent background'),
+            value: state.transparentBackground,
+            onChanged: state.setTransparentBackground,
+          )
+        else
+          const SizedBox(height: 8),
+        _ColorTile(
+          color: state.backgroundColor,
+          enabled: !state.transparentBackground,
+          onTap: () => _pickBackground(state),
+        ),
+        Text(
+          state.transparentBackground
+              ? 'The PNG keeps a transparent background.'
+              : state.format.allowsTransparentBackground
+              ? 'Transparent parts of the image show this colour.'
+              : 'Transparent parts of the image show this colour. The exported file is always opaque.',
+          style: theme.textTheme.bodySmall,
+        ),
+        const Divider(height: 32),
+        Row(
+          children: [
+            Text('Foreground tint', style: theme.textTheme.titleSmall),
+            const Spacer(),
+            Switch(value: state.tintEnabled, onChanged: state.setTintEnabled),
+          ],
+        ),
+        _ColorTile(
+          color: state.tintColor,
+          enabled: state.tintEnabled,
+          onTap: () => _pickTint(state),
+        ),
+        Text(
+          'Recolours the whole image in one colour, keeping its shape and transparency.',
+          style: theme.textTheme.bodySmall,
         ),
         const Divider(height: 32),
         Text('Export', style: theme.textTheme.titleSmall),
         const SizedBox(height: 8),
         Row(
           children: [
-            for (final type in ExportType.values) ...[
+            for (final type in state.format.exportTypes) ...[
               Expanded(
                 child: FilledButton.tonal(
                   onPressed: hasImage && !_busy
@@ -182,7 +292,8 @@ class _ControlsPanelState extends State<ControlsPanel> {
                   child: Text('Export ${type.label}'),
                 ),
               ),
-              if (type != ExportType.values.last) const SizedBox(width: 8),
+              if (type != state.format.exportTypes.last)
+                const SizedBox(width: 8),
             ],
           ],
         ),
@@ -191,6 +302,122 @@ class _ControlsPanelState extends State<ControlsPanel> {
           const LinearProgressIndicator(),
         ],
       ],
+    );
+  }
+}
+
+/// Whole-pixel margin input. Shows the stored value again when the edit is
+/// cleared or limited, so the field always matches the overlay.
+class _MarginField extends StatefulWidget {
+  const _MarginField({
+    required this.label,
+    required this.value,
+    required this.onChanged,
+  });
+
+  final String label;
+  final int value;
+  final ValueChanged<int> onChanged;
+
+  @override
+  State<_MarginField> createState() => _MarginFieldState();
+}
+
+class _MarginFieldState extends State<_MarginField> {
+  late final _controller = TextEditingController(text: '${widget.value}');
+  final _focus = FocusNode();
+
+  @override
+  void initState() {
+    super.initState();
+    _focus.addListener(() {
+      if (!_focus.hasFocus) _sync();
+    });
+  }
+
+  @override
+  void didUpdateWidget(_MarginField oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // While typing, only catch up when the value changed for another reason
+    // (Reset, or a limit), so a half-typed or empty field isn't overwritten.
+    if (!_focus.hasFocus ||
+        (widget.value != oldWidget.value &&
+            int.tryParse(_controller.text) != widget.value)) {
+      _sync();
+    }
+  }
+
+  void _sync() {
+    final text = '${widget.value}';
+    if (_controller.text != text) _controller.text = text;
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    _focus.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return TextField(
+      controller: _controller,
+      focusNode: _focus,
+      keyboardType: TextInputType.number,
+      inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+      decoration: InputDecoration(
+        labelText: widget.label,
+        isDense: true,
+        border: const OutlineInputBorder(),
+      ),
+      onChanged: (text) {
+        final v = int.tryParse(text);
+        if (v != null) widget.onChanged(v);
+      },
+      onSubmitted: (_) => _sync(),
+    );
+  }
+}
+
+String _typeNames(CanvasFormat format) =>
+    format.exportTypes.map((t) => t.label).join(' / ');
+
+/// Colour swatch with its hex code; tap to change.
+class _ColorTile extends StatelessWidget {
+  const _ColorTile({
+    required this.color,
+    required this.onTap,
+    this.enabled = true,
+  });
+
+  final Color color;
+  final VoidCallback onTap;
+  final bool enabled;
+
+  @override
+  Widget build(BuildContext context) {
+    final hex = (color.toARGB32() & 0xFFFFFF)
+        .toRadixString(16)
+        .padLeft(6, '0')
+        .toUpperCase();
+    return Opacity(
+      opacity: enabled ? 1 : 0.5,
+      child: ListTile(
+        contentPadding: EdgeInsets.zero,
+        leading: Container(
+          width: 32,
+          height: 32,
+          decoration: BoxDecoration(
+            color: color,
+            border: Border.all(color: Theme.of(context).colorScheme.outline),
+            borderRadius: BorderRadius.circular(6),
+          ),
+        ),
+        title: Text('#$hex'),
+        trailing: const Icon(Icons.edit_outlined),
+        onTap: onTap,
+      ),
     );
   }
 }

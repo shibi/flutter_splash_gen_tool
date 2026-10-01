@@ -10,7 +10,7 @@ import 'splash_renderer.dart';
 Future<String?> exportSplash(RenderRequest request) async {
   final type = request.type;
   final location = await getSaveLocation(
-    suggestedName: 'splash_${request.format.canvasSize}.${type.extension}',
+    suggestedName: '${request.format.fileName}.${type.extension}',
     acceptedTypeGroups: [
       XTypeGroup(
         label: type.label,

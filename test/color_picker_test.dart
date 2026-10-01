@@ -9,6 +9,8 @@ void main() {
     addTearDown(tester.view.reset);
 
     await tester.pumpWidget(const SplashGenXApp());
+    await tester.tap(find.text('Create Splash Icon'));
+    await tester.pumpAndSettle();
     await tester.tap(find.text('#FFFFFF'));
     await tester.pumpAndSettle();
 

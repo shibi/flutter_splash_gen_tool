@@ -267,9 +267,11 @@ class _ControlsPanelState extends State<ControlsPanel> {
         else
           const SizedBox(height: 8),
         _ColorTile(
+          label: 'Background',
           color: state.backgroundColor,
           enabled: !state.transparentBackground,
           onTap: () => _pickBackground(state),
+          onHex: state.setBackgroundColor,
         ),
         Text(
           state.transparentBackground
@@ -288,9 +290,11 @@ class _ControlsPanelState extends State<ControlsPanel> {
           ],
         ),
         _ColorTile(
+          label: 'Foreground',
           color: state.tintColor,
           enabled: state.tintEnabled,
           onTap: () => _pickTint(state),
+          onHex: state.setTintColor,
         ),
         Text(
           'Recolours the whole image in one colour, keeping its shape and transparency.',
@@ -401,40 +405,135 @@ class _MarginFieldState extends State<_MarginField> {
 String _typeNames(CanvasFormat format) =>
     format.exportTypes.map((t) => t.label).join(' / ');
 
-/// Colour swatch with its hex code; tap to change.
-class _ColorTile extends StatelessWidget {
+/// Parses a hex colour typed as RRGGBB or RGB, with or without a leading
+/// `#`. Returns an opaque colour, or null when the text isn't a full code.
+Color? parseHexColor(String text) {
+  var hex = text.trim().replaceFirst('#', '');
+  if (hex.length == 3) hex = hex.split('').map((c) => '$c$c').join();
+  if (hex.length != 6) return null;
+  final value = int.tryParse(hex, radix: 16);
+  return value == null ? null : Color(0xFF000000 | value);
+}
+
+String _hexOf(Color color) => (color.toARGB32() & 0xFFFFFF)
+    .toRadixString(16)
+    .padLeft(6, '0')
+    .toUpperCase();
+
+/// Colour swatch and an editable hex code. Tap the swatch or the palette
+/// button for the picker, or type a code such as 355070 or #E56B6F.
+class _ColorTile extends StatefulWidget {
   const _ColorTile({
+    required this.label,
     required this.color,
     required this.onTap,
+    required this.onHex,
     this.enabled = true,
   });
 
+  final String label;
   final Color color;
   final VoidCallback onTap;
+  final ValueChanged<Color> onHex;
   final bool enabled;
 
   @override
+  State<_ColorTile> createState() => _ColorTileState();
+}
+
+class _ColorTileState extends State<_ColorTile> {
+  late final _controller = TextEditingController(text: _hexOf(widget.color));
+  final _focus = FocusNode();
+  bool _invalid = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _focus.addListener(() {
+      if (!_focus.hasFocus) _sync();
+    });
+  }
+
+  @override
+  void didUpdateWidget(_ColorTile oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // Follow the picker; while typing, only when the colour really changed
+    // to something other than what is being typed.
+    if (!_focus.hasFocus ||
+        (widget.color != oldWidget.color &&
+            parseHexColor(_controller.text) != widget.color)) {
+      _sync();
+    }
+  }
+
+  void _sync() {
+    final hex = _hexOf(widget.color);
+    if (_controller.text != hex) _controller.text = hex;
+    if (_invalid) setState(() => _invalid = false);
+  }
+
+  void _onChanged(String text) {
+    final color = parseHexColor(text);
+    setState(() => _invalid = color == null && text.isNotEmpty);
+    if (color != null && color != widget.color) widget.onHex(color);
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    _focus.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final hex = (color.toARGB32() & 0xFFFFFF)
-        .toRadixString(16)
-        .padLeft(6, '0')
-        .toUpperCase();
+    final outline = Theme.of(context).colorScheme.outline;
     return Opacity(
-      opacity: enabled ? 1 : 0.5,
-      child: ListTile(
-        contentPadding: EdgeInsets.zero,
-        leading: Container(
-          width: 32,
-          height: 32,
-          decoration: BoxDecoration(
-            color: color,
-            border: Border.all(color: Theme.of(context).colorScheme.outline),
-            borderRadius: BorderRadius.circular(6),
-          ),
+      opacity: widget.enabled ? 1 : 0.5,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 8),
+        child: Row(
+          children: [
+            InkWell(
+              onTap: widget.onTap,
+              borderRadius: BorderRadius.circular(6),
+              child: Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: widget.color,
+                  border: Border.all(color: outline),
+                  borderRadius: BorderRadius.circular(6),
+                ),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: TextField(
+                controller: _controller,
+                focusNode: _focus,
+                inputFormatters: [
+                  FilteringTextInputFormatter.allow(RegExp('[#0-9a-fA-F]')),
+                  LengthLimitingTextInputFormatter(7),
+                ],
+                decoration: InputDecoration(
+                  labelText: '${widget.label} hex',
+                  prefixText: '#',
+                  isDense: true,
+                  border: const OutlineInputBorder(),
+                  errorText: _invalid ? 'Use 6 hex digits' : null,
+                ),
+                onChanged: _onChanged,
+                onSubmitted: (_) => _sync(),
+              ),
+            ),
+            IconButton(
+              tooltip: 'Pick ${widget.label.toLowerCase()} colour',
+              icon: const Icon(Icons.palette_outlined),
+              onPressed: widget.onTap,
+            ),
+          ],
         ),
-        title: Text('#$hex'),
-        trailing: const Icon(Icons.edit_outlined),
-        onTap: onTap,
       ),
     );
   }

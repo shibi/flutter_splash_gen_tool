@@ -8,11 +8,22 @@ Download `SplashGenX-Setup-x.y.z.exe` from the repo's Releases page (tagged buil
 
 ## Use
 
-1. **Open image** and pick a PNG/JPEG/WebP/BMP.
+1. On the start page click **Create Splash Icon**, then **Open image** and pick a PNG/JPEG/WebP/BMP.
 2. Choose **1152 × 1152** (768 px circle) or **960 × 960** (640 px circle).
 3. Use the **Scale** slider (or **Fit in circle** / **Fill background**) and drag the image or use the arrow keys (Shift = 10 px) to align it with the red circle. The circle is a guide only and is never exported.
-4. Pick a **Background** colour. Output has no alpha channel.
+4. Pick a **Background** colour. Transparent parts of the image (e.g. a PNG logo) show this colour, and the output has no alpha channel.
+   Optionally turn on **Foreground tint** to recolour the whole image in one colour while keeping its shape.
 5. **Export PNG** or **Export JPEG**.
+
+### Branding logo
+
+On the start page click **Create Branding Logo**. It works like the splash editor with a fixed 800 × 320 canvas. Instead of a circle it shows a rectangle guide inside editable **Left**, **Right**, **Top** and **Bottom** margins (60 px left and right, 50 px top and bottom by default). The guide is never exported. **Fit inside** fits and centres the logo within the margins, **Fill background** covers the canvas, and you get background and foreground tint colours, a **Transparent background** option, and PNG-only export.
+
+On the start page click **Flutter Launcher Icon** for a 1024 × 1024 app icon. The **background layer** is a solid colour, so the PNG is always fully opaque. The **foreground layer** is your image with the same scale, position and tint controls. The preview shows the safe zone, a rounded square covering 66% of the canvas (676 px) with a circle inside it. Neither guide is exported.
+
+## Microsoft Store
+
+The Store package (`.msix`) is built with the installer. See [docs/STORE.md](docs/STORE.md) for setting the Partner Center identity and submitting.
 
 ## Release a new installer
 

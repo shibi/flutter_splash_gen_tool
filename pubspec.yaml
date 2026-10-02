@@ -63,6 +63,9 @@ flutter:
   # the material Icons class.
   uses-material-design: true
 
+  assets:
+    - assets/icon/app_icon.png
+
   # To add assets to your application, add an assets section, like this:
   # assets:
   #   - images/a_dot_burr.jpeg
@@ -93,3 +96,15 @@ flutter:
   #
   # For details regarding fonts from package dependencies,
   # see https://flutter.dev/to/font-from-package
+
+# Microsoft Store package (dart run msix:create). The three identity values
+# come from Partner Center > your app > Product identity; see docs/STORE.md.
+msix_config:
+  display_name: Splash GenX
+  identity_name: BZCode.SplashGenx
+  publisher: CN=E8E9AFE1-59F1-4759-A45F-D74F651B7519
+  publisher_display_name: BZCode
+  logo_path: assets/icon/app_icon.png
+  languages: en-us
+  output_name: SplashGenX
+  store: true

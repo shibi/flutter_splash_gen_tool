@@ -28,6 +28,7 @@ class RenderRequest {
     required this.type,
     this.transparentBackground = false,
     this.tintArgb,
+    this.scaffoldArgb,
     this.jpegQuality = 95,
   });
 
@@ -46,6 +47,10 @@ class RenderRequest {
   /// When set, every pixel of the image takes this colour and keeps its own
   /// transparency, like a monochrome icon tint.
   final int? tintArgb;
+
+  /// When set, a solid square of this colour, [CanvasFormat.scaffoldSize]
+  /// wide, is drawn at the centre between the background and the image.
+  final int? scaffoldArgb;
 
   final int jpegQuality;
 }
@@ -70,6 +75,26 @@ img.Image renderSplash(RenderRequest r) {
         (r.backgroundArgb >> 16) & 0xFF,
         (r.backgroundArgb >> 8) & 0xFF,
         r.backgroundArgb & 0xFF,
+      ),
+    );
+  }
+
+  final scaffold = r.scaffoldArgb;
+  final scaffoldSize = r.format.scaffoldSize;
+  if (scaffold != null && scaffoldSize != null) {
+    final x = (canvasWidth - scaffoldSize) ~/ 2;
+    final y = (canvasHeight - scaffoldSize) ~/ 2;
+    img.fillRect(
+      canvas,
+      x1: x,
+      y1: y,
+      x2: x + scaffoldSize - 1,
+      y2: y + scaffoldSize - 1,
+      color: img.ColorRgba8(
+        (scaffold >> 16) & 0xFF,
+        (scaffold >> 8) & 0xFF,
+        scaffold & 0xFF,
+        255,
       ),
     );
   }

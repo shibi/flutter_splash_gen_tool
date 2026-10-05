@@ -32,6 +32,9 @@ class EditorState extends ChangeNotifier {
   bool _showOverlay = true;
   bool _tintEnabled = false;
   Color _tintColor = const Color(0xFF000000);
+  bool _scaffoldEnabled = false;
+  bool _scaffoldTransparent = false;
+  Color _scaffoldColor = const Color(0xFFEAAC8B);
 
   CanvasFormat get format => _format;
   img.Image? get image => _image;
@@ -47,6 +50,27 @@ class EditorState extends ChangeNotifier {
   bool get showOverlay => _showOverlay;
   bool get tintEnabled => _tintEnabled;
   Color get tintColor => _tintColor;
+
+  /// Whether the format offers a scaffold layer at all.
+  bool get hasScaffold => _format.scaffoldSize != null;
+
+  /// True only when the user turned it on and the format has one.
+  bool get scaffoldEnabled => _scaffoldEnabled && hasScaffold;
+  bool get scaffoldTransparent => _scaffoldTransparent;
+  Color get scaffoldColor => _scaffoldColor;
+
+  /// The scaffold square in output pixels, centred on the canvas, or null
+  /// when it is off.
+  Rect? get scaffoldRect {
+    final size = _format.scaffoldSize;
+    if (!scaffoldEnabled || size == null) return null;
+    return Rect.fromCenter(
+      center: Offset(_format.width / 2, _format.height / 2),
+      width: size.toDouble(),
+      height: size.toDouble(),
+    );
+  }
+
   bool get hasImage => _image != null;
 
   /// Margins of the rectangle guide, or null when the format has none.
@@ -192,10 +216,32 @@ class EditorState extends ChangeNotifier {
     transparentBackground: transparentBackground,
     type: type,
     tintArgb: _tintEnabled ? _tintColor.toARGB32() : null,
+    // A transparent scaffold only shows its outline in the preview.
+    scaffoldArgb: scaffoldEnabled && !_scaffoldTransparent
+        ? _scaffoldColor.toARGB32()
+        : null,
   );
 
   void setTransparentBackground(bool transparent) {
     _transparentBackground = transparent;
+    notifyListeners();
+  }
+
+  void setScaffoldEnabled(bool enabled) {
+    _scaffoldEnabled = enabled;
+    notifyListeners();
+  }
+
+  void setScaffoldTransparent(bool transparent) {
+    _scaffoldTransparent = transparent;
+    notifyListeners();
+  }
+
+  /// The scaffold colour is always opaque; choosing one turns transparency
+  /// off.
+  void setScaffoldColor(Color color) {
+    _scaffoldColor = color.withAlpha(0xFF);
+    _scaffoldTransparent = false;
     notifyListeners();
   }
 

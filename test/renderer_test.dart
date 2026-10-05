@@ -194,6 +194,40 @@ void main() {
     }
   });
 
+  test('scaffold square sits between background and image', () {
+    final out = renderSplash(
+      RenderRequest(
+        source: _redSquareWithTransparentCorner(),
+        format: CanvasFormat.splashLarge,
+        scale: 2,
+        offsetX: 0,
+        offsetY: 0,
+        backgroundArgb: 0xFF0000FF,
+        type: ExportType.png,
+        scaffoldArgb: 0xFF00FF00,
+      ),
+    );
+    expect(out.numChannels, 3);
+    List<num> rgb(int x, int y) {
+      final p = out.getPixel(x, y);
+      return [p.r, p.g, p.b];
+    }
+
+    // 768 px square centred on 1152: from 192 to 959.
+    expect(rgb(191, 576), [0, 0, 255]);
+    expect(rgb(192, 576), [0, 255, 0]);
+    expect(rgb(959, 959), [0, 255, 0]);
+    expect(rgb(960, 576), [0, 0, 255]);
+    // The image is drawn on top of the scaffold.
+    expect(rgb(576, 576), [255, 0, 0]);
+  });
+
+  test('no scaffold colour leaves only the background', () {
+    final out = renderSplash(_request(scale: 0.5));
+    final p = out.getPixel(200, 576);
+    expect([p.r, p.g, p.b], [0, 0, 255]);
+  });
+
   test('splash formats ignore the transparent option', () {
     final bytes = renderSplashBytes(_request(transparent: true));
     expect(img.decodePng(bytes)!.numChannels, 3);

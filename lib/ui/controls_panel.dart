@@ -72,6 +72,11 @@ class _ControlsPanelState extends State<ControlsPanel> {
     );
   }
 
+  Future<void> _pickScaffold(EditorState state) async {
+    final color = await _pickColor(state.scaffoldColor, 'Scaffold colour');
+    if (color != state.scaffoldColor) state.setScaffoldColor(color);
+  }
+
   Future<void> _pickTint(EditorState state) async {
     final color = await _pickColor(state.tintColor, 'Foreground tint');
     // The dialog returns the starting colour on cancel; keep tint as it was.
@@ -216,7 +221,14 @@ class _ControlsPanelState extends State<ControlsPanel> {
           children: [
             Text('Scale', style: theme.textTheme.titleSmall),
             const Spacer(),
-            Text(hasImage ? '${(state.scale * 100).toStringAsFixed(1)}%' : ''),
+            SizedBox(
+              width: 110,
+              child: _PercentField(
+                value: state.scale * 100,
+                enabled: hasImage,
+                onChanged: (percent) => state.setScale(percent / 100),
+              ),
+            ),
           ],
         ),
         Slider(
@@ -281,6 +293,39 @@ class _ControlsPanelState extends State<ControlsPanel> {
               : 'Transparent parts of the image show this colour. The exported file is always opaque.',
           style: theme.textTheme.bodySmall,
         ),
+        if (state.hasScaffold) ...[
+          const Divider(height: 32),
+          Row(
+            children: [
+              Text('Scaffold layer', style: theme.textTheme.titleSmall),
+              const Spacer(),
+              Switch(
+                value: state.scaffoldEnabled,
+                onChanged: state.setScaffoldEnabled,
+              ),
+            ],
+          ),
+          if (state.scaffoldEnabled) ...[
+            SwitchListTile(
+              contentPadding: EdgeInsets.zero,
+              title: const Text('Transparent scaffold'),
+              value: state.scaffoldTransparent,
+              onChanged: state.setScaffoldTransparent,
+            ),
+            _ColorTile(
+              label: 'Scaffold',
+              color: state.scaffoldColor,
+              enabled: !state.scaffoldTransparent,
+              onTap: () => _pickScaffold(state),
+              onHex: state.setScaffoldColor,
+            ),
+          ],
+          Text(
+            'A ${state.format.scaffoldSize} × ${state.format.scaffoldSize} px square at the centre, '
+            'around the safe circle and behind the image. Its outline shows in the preview only.',
+            style: theme.textTheme.bodySmall,
+          ),
+        ],
         const Divider(height: 32),
         Row(
           children: [
@@ -324,6 +369,85 @@ class _ControlsPanelState extends State<ControlsPanel> {
           const LinearProgressIndicator(),
         ],
       ],
+    );
+  }
+}
+
+/// Scale as an editable percentage. Applies as you type; the slider limits
+/// still hold, and the field shows the applied value when you leave it.
+class _PercentField extends StatefulWidget {
+  const _PercentField({
+    required this.value,
+    required this.enabled,
+    required this.onChanged,
+  });
+
+  final double value;
+  final bool enabled;
+  final ValueChanged<double> onChanged;
+
+  @override
+  State<_PercentField> createState() => _PercentFieldState();
+}
+
+class _PercentFieldState extends State<_PercentField> {
+  late final _controller = TextEditingController(text: _format(widget.value));
+  final _focus = FocusNode();
+
+  static String _format(double v) => v.toStringAsFixed(1);
+
+  @override
+  void initState() {
+    super.initState();
+    _focus.addListener(() {
+      if (!_focus.hasFocus) _sync();
+    });
+  }
+
+  @override
+  void didUpdateWidget(_PercentField oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // Follow the slider and the snap buttons, but don't rewrite what is
+    // being typed.
+    if (!_focus.hasFocus) _sync();
+  }
+
+  void _sync() {
+    final text = widget.enabled ? _format(widget.value) : '';
+    if (_controller.text != text) _controller.text = text;
+  }
+
+  void _apply(String text) {
+    final v = double.tryParse(text);
+    if (v != null && v > 0) widget.onChanged(v);
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    _focus.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return TextField(
+      controller: _controller,
+      focusNode: _focus,
+      enabled: widget.enabled,
+      textAlign: TextAlign.end,
+      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+      inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'[0-9.]'))],
+      decoration: const InputDecoration(
+        suffixText: '%',
+        isDense: true,
+        border: OutlineInputBorder(),
+      ),
+      onChanged: _apply,
+      onSubmitted: (text) {
+        _apply(text);
+        _sync();
+      },
     );
   }
 }

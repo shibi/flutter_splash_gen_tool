@@ -7,6 +7,7 @@ enum CanvasFormat {
     width: 1152,
     height: 1152,
     circleDiameter: 768,
+    scaffoldSize: 768,
     label: '1152 × 1152',
     fileName: 'splash_1152',
   ),
@@ -16,6 +17,7 @@ enum CanvasFormat {
     width: 960,
     height: 960,
     circleDiameter: 640,
+    scaffoldSize: 640,
     label: '960 × 960',
     fileName: 'splash_960',
   ),
@@ -54,6 +56,7 @@ enum CanvasFormat {
     this.allowsTransparentBackground = false,
     this.defaultMargins,
     this.squareGuide,
+    this.scaffoldSize,
   });
 
   static const splashFormats = [splashLarge, splashSmall];
@@ -84,6 +87,11 @@ enum CanvasFormat {
   /// Side of the centred rounded-square guide, or null for none. The circle
   /// guide, when there is one, sits inside it.
   final int? squareGuide;
+
+  /// Side of the optional centred scaffold square drawn between the
+  /// background and the image, or null when the format has no scaffold.
+  /// It encloses the safe circle exactly.
+  final int? scaffoldSize;
 
   /// Corner radius of [squareGuide], in output pixels.
   static const squareGuideRadius = 4.0;

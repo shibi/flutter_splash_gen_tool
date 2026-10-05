@@ -50,6 +50,17 @@ class PreviewCanvas extends StatelessWidget {
                               ? const _Checkerboard()
                               : ColoredBox(color: state.backgroundColor),
                         ),
+                        if (state.scaffoldRect case final scaffold?
+                            when !state.scaffoldTransparent)
+                          // Scaffold layer: above the background, below the
+                          // image, exactly as it is exported.
+                          Positioned(
+                            left: scaffold.left * k,
+                            top: scaffold.top * k,
+                            width: scaffold.width * k,
+                            height: scaffold.height * k,
+                            child: ColoredBox(color: state.scaffoldColor),
+                          ),
                         if (image != null)
                           Positioned(
                             left:
@@ -85,6 +96,24 @@ class PreviewCanvas extends StatelessWidget {
                                             0.5
                                     ? Colors.black54
                                     : Colors.white70,
+                              ),
+                            ),
+                          ),
+                        if (state.scaffoldRect case final scaffold?)
+                          // Outline of the scaffold edge; preview only.
+                          Positioned(
+                            left: scaffold.left * k,
+                            top: scaffold.top * k,
+                            width: scaffold.width * k,
+                            height: scaffold.height * k,
+                            child: IgnorePointer(
+                              child: DecoratedBox(
+                                decoration: BoxDecoration(
+                                  border: Border.all(
+                                    color: Palette.plum,
+                                    width: 1.5,
+                                  ),
+                                ),
                               ),
                             ),
                           ),

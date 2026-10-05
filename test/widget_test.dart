@@ -12,6 +12,11 @@ void main() {
     expect(CanvasFormat.splashLarge.circleDiameter, 768);
     expect(CanvasFormat.splashSmall.width, 960);
     expect(CanvasFormat.splashSmall.circleDiameter, 640);
+    // The scaffold square encloses the safe circle exactly.
+    expect(CanvasFormat.splashLarge.scaffoldSize, 768);
+    expect(CanvasFormat.splashSmall.scaffoldSize, 640);
+    expect(CanvasFormat.branding.scaffoldSize, isNull);
+    expect(CanvasFormat.launcherIcon.scaffoldSize, isNull);
   });
 
   test('scale range spans fit-in-circle to fill-background', () {
@@ -116,7 +121,8 @@ void main() {
     addTearDown(tester.view.reset);
 
     await tester.pumpWidget(const SplashGenXApp());
-    expect(find.text('Developer: shibinpr'), findsOneWidget);
+    expect(find.text('©shibin.pr'), findsOneWidget);
+    expect(find.textContaining('Developer'), findsNothing);
 
     await tester.tap(find.text('Create Splash Icon'));
     await tester.pumpAndSettle();

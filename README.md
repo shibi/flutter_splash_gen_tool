@@ -17,6 +17,8 @@ Download `SplashGenX-Setup-x.y.z.exe` from the repo's Releases page (tagged buil
 
 ### Branding logo
 
+In the splash editor you can type the scale as a percentage next to the slider. An optional **Scaffold layer** (off by default) adds a centred square, the same size as the safe circle (768 or 640 px), between the background and the image. It can be transparent or any colour, and its outline shows in the preview only.
+
 On the start page click **Create Branding Logo**. It works like the splash editor with a fixed 800 × 320 canvas. Instead of a circle it shows a rectangle guide inside editable **Left**, **Right**, **Top** and **Bottom** margins (60 px left and right, 50 px top and bottom by default). The guide is never exported. **Fit inside** fits and centres the logo within the margins, **Fill background** covers the canvas, and you get background and foreground tint colours, a **Transparent background** option, and PNG-only export.
 
 On the start page click **Flutter Launcher Icon** for a 1024 × 1024 app icon. The **background layer** is a solid colour, so the PNG is always fully opaque. The **foreground layer** is your image with the same scale, position and tint controls. The preview shows the safe zone, a rounded square covering 66% of the canvas (676 px) with a circle inside it. Neither guide is exported.
